@@ -184,6 +184,88 @@ Following the honesty audit standards from v3.5.71+:
 - LongMemEval is a conversational memory benchmark; AgentDB is designed for agent orchestration memory — the benchmark may not test AgentDB's actual strengths
 - Over-optimizing for a benchmark can lead to benchmark gaming (Goodhart's Law)
 
+## Run Results — 2026-05-01 (n=500, k=10, no API)
+
+Branch: `bench/longmemeval-2026-05-01` · Full report: `v3/@claude-flow/memory/benchmarks/longmemeval/results/SUMMARY-2026-05-01.md`
+
+| Metric | Raw HNSW | SmartRetrieval (ADR-090) | Δ |
+|---|---|---|---|
+| Session R@10 | 100.0% | 100.0% | 0 |
+| Session Top-1 | 100.0% | 100.0% | 0 |
+| **Content@1** | 22.2% | **24.6%** | **+2.4 pp** |
+| Content@3 | 35.8% | 34.6% | −1.2 pp |
+| Content@10 | 43.6% | 43.2% | −0.4 pp |
+| **MRR (content)** | 0.2967 | **0.3058** | **+0.0091** |
+| Retrieval p50 | 0.02 ms | 5.79 ms | +5.77 ms |
+| Retrieval p95 | 0.03 ms | 13.73 ms | +13.70 ms |
+
+**Per-category C@1 (Smart):** knowledge-update **41.0%** (+12.8 pp vs raw), single-session-user 60.0%, single-session-assistant 30.4%, temporal-reasoning 12.0%, multi-session 12.0%, single-session-preference **0.0%**.
+
+**Honest assessment.** Session-level routing is solved (R@10 and Top-1 both 100% — the right session always lands somewhere in the top-k). The content-level miss is what's holding the score down: even when we retrieve the right session, the answer span isn't in our top-1 chunk often enough. That's an embedding/chunking issue, not a session-routing issue.
+
+## Optimization Roadmap (informed by 2026-05-01 results)
+
+The benchmark surfaces clear, ordered targets. Each item lists the metric it should move and a rough lever cost.
+
+### Tier 1 — Embedding & chunking quality (biggest expected gains)
+
+1. **Upgrade embedding model from all-MiniLM-L6-v2 (384d) to a stronger encoder.**
+   - Candidates: `nomic-embed-text-v1.5` (768d), `bge-large-en-v1.5` (1024d), `Qwen3-Embedding-0.6B` (1024d, multilingual). Already supported by ONNX runtime; just swap the model card.
+   - Expected: +5–15 pp on Content@1, possibly closes the gap with `single-session-preference` (currently 0%).
+   - Cost: ~3x larger index, ~2x ingest time. Mitigated by Int8 quantization (already in repo, ADR-076).
+
+2. **Smarter chunking with sentence boundaries + question-style overlap.**
+   - Today the harness chunks at session boundaries. Many "preference" answers live mid-message and get diluted.
+   - Use semantic-aware chunking (e.g., `semchunk` with a 256-token window, 64-token overlap, sentence boundaries). Index every chunk; score sessions by max-chunk score.
+   - Expected: +2–5 pp on Content@1 across all categories, big gains on `single-session-preference` (the 0% category).
+
+3. **Hybrid sparse+dense retrieval.**
+   - Add BM25 over the same chunks; combine with dense via Reciprocal Rank Fusion (RRF). SmartRetrieval already has RRF infrastructure for multi-query — extend to dense+sparse.
+   - Expected: +3–8 pp on Content@1 for fact-recall categories (`knowledge-update`, `single-session-user`).
+
+### Tier 2 — Pipeline tuning (smaller gains, free metrics)
+
+4. **Tune SmartRetrieval recency weighting per category.**
+   - Smart loses on `single-session-{assistant,user}` because recency bias hurts when the answer is in a single session that happens not to be the most recent. Use the controller (`agentdb_semantic-route` from ADR-088) to classify the question first, then disable recency for `single-session-*` categories.
+   - Expected: closes the −1.2 pp loss on Content@3 and recovers the C@k regressions in those categories.
+
+5. **MMR λ sweep.**
+   - Default λ is in the smart pipeline at the value picked for the 2026-04-11 run; a small grid (0.3 / 0.5 / 0.7) on the n=30 quick-bench takes ~1 min and is cheap. Worth a sweep before any model swap so we don't double-optimize.
+   - Expected: +0.5–2 pp on MRR.
+
+6. **Multi-query expansion using a tiny LLM (Haiku).**
+   - For temporal/multi-hop questions, expand the query into 3–5 paraphrases offline, embed each, RRF-merge. SmartRetrieval already supports `multiQuery` flag; the gap is generating the paraphrases.
+   - Expected: +5–10 pp on `temporal-reasoning` and `multi-session` (currently the two weakest categories at 11–12% C@1).
+   - Cost: ~$0.0002 / question via Haiku (negligible at 500 Q).
+
+### Tier 3 — Architectural (longer cycle)
+
+7. **Two-stage retrieval: cheap dense → cross-encoder rerank.**
+   - Top-k=50 from HNSW, then `cross-encoder/ms-marco-MiniLM-L6-v2` rerank to top-10. Adds ~30 ms latency (still <50 ms total), can lift Content@1 by 5–15 pp on multi-hop.
+   - Cost: +1 model. Could be worker-side via the same ONNX runtime that powers embeddings today.
+
+8. **Conversation-aware chunking with role + timestamp metadata as filters.**
+   - Smart already uses session_id; extend to filter by role (`assistant` vs `user`) and timestamp ranges when the question contains temporal cues ("last week", "yesterday"). Pre-compute timestamp ranges in `agentdb_pattern-store`.
+   - Expected: +5–10 pp on `temporal-reasoning`.
+
+9. **Knowledge-update specific path: version chains.**
+   - Knowledge-update is already our best category at 41.0% C@1. AgentDB has version tracking (per ADR-088 expected advantages); wire it into SmartRetrieval so contradicting facts in later sessions override earlier ones at retrieval time.
+   - Expected: +5 pp specifically on `knowledge-update` C@1.
+
+### Tier 4 — Honesty / hygiene
+
+10. **Fix the vitest bench suite** so cache / HNSW / vector / write throughput regresses are caught automatically.
+    - Today `npm run bench` fails with "No test suite found" — the `.bench.ts` files use a custom `framework/benchmark.ts` runner that's incompatible with vitest's `bench()` API and has a missing `printResults` + NaN time tracking. Migrate to `vitest bench` syntax or fix the framework.
+
+11. **Re-run the n=500 sweep after each Tier-1 change** with a `--label optimization-N` flag so we have a clean ablation history.
+
+12. **Investigate the `single-session-preference` 0% across both raw AND smart.**
+    - Both strategies miss this category entirely. The session is always retrieved (R@10 = 100%) but the preference answer never makes it to the top-k chunks. Strong signal that this is a chunking / embedding limitation rather than a retrieval pipeline gap. Manual inspection of 5 failing questions should clarify.
+
+### Targets
+
+If we land Tier 1 + Tier 2 we should comfortably clear **40% Content@1 / 0.45 MRR** without any LLM-in-the-loop reranking, putting AgentDB in the same neighborhood as Observational Memory (94.87% on the LLM-graded final-answer score, which is a different metric than our retrieval-only Content@1). Tier 3's cross-encoder rerank is what we'd reach for to chase MemPalace's 96.6% raw — but at that point the bottleneck shifts to QA-prompt quality, not retrieval.
+
 ## References
 
 - [LongMemEval Paper (ICLR 2025)](https://arxiv.org/abs/2410.10813)
@@ -194,4 +276,6 @@ Following the honesty audit standards from v3.5.71+:
 - [MemPalace Benchmark Issues (#29)](https://github.com/milla-jovovich/mempalace/issues/29)
 - [Observational Memory (Mastra)](https://mastra.ai/research/observational-memory)
 - [OMEGA Benchmark](https://omegamax.co/benchmarks)
+- 2026-05-01 run summary: `v3/@claude-flow/memory/benchmarks/longmemeval/results/SUMMARY-2026-05-01.md`
+- SmartRetrieval implementation: `v3/@claude-flow/memory/src/smart-retrieval.ts` (ADR-090)
 - [Emergence AI SOTA on LongMemEval](https://www.emergence.ai/blog/sota-on-longmemeval-with-rag)
