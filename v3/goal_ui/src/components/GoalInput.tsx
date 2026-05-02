@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Target, Sparkles, Settings, TrendingUp, Building2, Heart, GraduationCap, Code, Cpu, Brain, Megaphone } from "lucide-react";
@@ -11,10 +11,27 @@ interface GoalInputProps {
   isPlanning: boolean;
   onAdvancedSettings?: () => void;
   onConfigUpdate?: (config: any) => void;
+  /**
+   * One-shot hydration source for the goal textarea (e.g. from
+   * RVF persistence in Index.tsx). Only adopted when the textarea
+   * is empty — typing into the field "owns" it from then on so an
+   * upstream prop change doesn't clobber in-progress edits.
+   */
+  initialValue?: string;
 }
 
-export const GoalInput = ({ onSubmit, isPlanning, onAdvancedSettings, onConfigUpdate }: GoalInputProps) => {
-  const [goal, setGoal] = useState("");
+export const GoalInput = ({ onSubmit, isPlanning, onAdvancedSettings, onConfigUpdate, initialValue }: GoalInputProps) => {
+  const [goal, setGoal] = useState(initialValue ?? "");
+  // Adopt initialValue when it arrives (e.g. RVF hydrate-on-mount
+  // resolves after the component mounted with empty defaults).
+  // Only hydrate while the textarea is still empty so user typing
+  // wins.
+  useEffect(() => {
+    if (initialValue && !goal) setGoal(initialValue);
+    // Intentionally ignore `goal` in deps — we only want to react
+    // to upstream initialValue changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialValue]);
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 

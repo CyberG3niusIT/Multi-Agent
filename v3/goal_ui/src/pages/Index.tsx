@@ -1081,6 +1081,7 @@ const Index = () => {
           <GoalInput
             onSubmit={handleGoalSubmit}
             isPlanning={isPlanning}
+            initialValue={userGoal}
             onAdvancedSettings={() => setShowAdvancedSettings(true)}
             onConfigUpdate={(optimizedConfig) => {
               setResearchConfig(prev => ({
