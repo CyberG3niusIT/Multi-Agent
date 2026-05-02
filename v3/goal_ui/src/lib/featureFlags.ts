@@ -35,6 +35,19 @@ export const RVF_ENABLED: boolean = envBool(
 );
 
 /**
+ * Whether `supabase.functions.invoke()` callsites should route to
+ * the LOCAL_FN/GCF stack via `invokeFunction()` instead. Default
+ * `false` keeps production behavior Supabase-backed; flipping it
+ * routes all 4 wired workflows through the new functions stack
+ * (Step 21a). Step 21b removes the Supabase path entirely and
+ * deletes this flag.
+ */
+export const USE_LOCAL_FUNCTIONS: boolean = envBool(
+  import.meta.env.VITE_USE_LOCAL_FUNCTIONS as string | undefined,
+  /* default */ false,
+);
+
+/**
  * Base URL for server-side functions (LOCAL_FN in dev, GCF in prod).
  * Replaces Supabase Edge Function calls per ADR-093 Migration Matrix.
  */

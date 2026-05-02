@@ -21,6 +21,9 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { serve } from '@hono/node-server';
 import { generateResearchGoalHandler } from './generate-research-goal/handler';
+import { researchStepHandler } from './research-step/handler';
+import { generateActionItemsHandler } from './generate-action-items/handler';
+import { optimizeResearchConfigHandler } from './optimize-research-config/handler';
 
 const PORT = Number(process.env.FUNCTIONS_PORT ?? '8787');
 
@@ -51,13 +54,53 @@ app.use('/functions/v1/*', async (c, next) => {
   await next();
 });
 
-app.get('/', (c) => c.text('RuFlo functions dev server — POST /functions/v1/<name>'));
+app.get('/', (c) => c.text(
+  'RuFlo functions dev server — endpoints:\n' +
+  '  POST /functions/v1/generate-research-goal\n' +
+  '  POST /functions/v1/research-step\n' +
+  '  POST /functions/v1/generate-action-items\n' +
+  '  POST /functions/v1/optimize-research-config\n',
+));
 
 app.post('/functions/v1/generate-research-goal', async (c) => {
   const body = await c.req.json().catch(() => ({}));
   const result = await generateResearchGoalHandler({
     category: typeof body?.category === 'string' ? body.category : '',
     customContext: typeof body?.customContext === 'string' ? body.customContext : undefined,
+  });
+  return c.json(result.body, { status: result.status as 200 | 400 | 402 | 429 | 500 | 502 });
+});
+
+app.post('/functions/v1/research-step', async (c) => {
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+  const result = await researchStepHandler({
+    goal: typeof body.goal === 'string' ? body.goal : '',
+    stepTitle: typeof body.stepTitle === 'string' ? body.stepTitle : '',
+    stepDescription: typeof body.stepDescription === 'string' ? body.stepDescription : '',
+    stepType: typeof body.stepType === 'string' ? body.stepType : '',
+    aiModel: typeof body.aiModel === 'string' ? body.aiModel : undefined,
+    config: body.config,
+    previousStepsData: Array.isArray(body.previousStepsData) ? body.previousStepsData as never : undefined,
+  });
+  return c.json(result.body, { status: result.status as 200 | 400 | 402 | 429 | 500 | 502 });
+});
+
+app.post('/functions/v1/generate-action-items', async (c) => {
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+  const result = await generateActionItemsHandler({
+    goal: typeof body.goal === 'string' ? body.goal : '',
+    researchContext: Array.isArray(body.researchContext) ? body.researchContext as never : [],
+    totalSteps: typeof body.totalSteps === 'number' ? body.totalSteps : 0,
+    totalDataPoints: typeof body.totalDataPoints === 'number' ? body.totalDataPoints : 0,
+  });
+  return c.json(result.body, { status: result.status as 200 | 400 | 402 | 429 | 500 | 502 });
+});
+
+app.post('/functions/v1/optimize-research-config', async (c) => {
+  const body = (await c.req.json().catch(() => ({}))) as { preset?: string; currentGoal?: string };
+  const result = await optimizeResearchConfigHandler({
+    preset: typeof body.preset === 'string' ? body.preset : '',
+    currentGoal: typeof body.currentGoal === 'string' ? body.currentGoal : undefined,
   });
   return c.json(result.body, { status: result.status as 200 | 400 | 402 | 429 | 500 | 502 });
 });
