@@ -1,0 +1,26 @@
+# See: gcloud topic gcloudignore. Mirrors v3/goal_ui/.gcloudignore.
+.gcloudignore
+.git
+.gitignore
+
+node_modules
+#!include:.gitignore
+
+# Cloud Run combined-frontend+backend deploy filter.
+# server.ts serves dist/ at / when present (single-service mode).
+!dist
+!dist/**
+!dist/index.html
+!dist/assets/**
+!dist/dossiers/**
+
+# Exclude frontend SOURCE files we don't need at runtime.
+src/
+public/
+/index.html
+vite.config.ts
+tsconfig.json
+tests/
+docs/
+README.md
+.github/

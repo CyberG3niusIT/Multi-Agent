@@ -1,0 +1,48 @@
+{
+  "dossiers": [
+    {
+      "slug": "adr-088",
+      "seed": "ADR-088",
+      "seedType": "adr",
+      "depth": 2,
+      "truncated": false,
+      "generatedAt": "2026-05-03T00:00:00Z",
+      "nodeCount": 14,
+      "edgeCount": 14,
+      "sources": [
+        "Read",
+        "Glob",
+        "Grep",
+        "git-log"
+      ]
+    },
+    {
+      "slug": "ruflo-goals",
+      "seed": "ruflo-goals",
+      "seedType": "concept",
+      "depth": 2,
+      "truncated": false,
+      "generatedAt": "2026-05-03T00:00:00Z",
+      "nodeCount": 16,
+      "edgeCount": 14,
+      "sources": [
+        "Read",
+        "Glob"
+      ]
+    },
+    {
+      "slug": "ruvnet",
+      "seed": "ruvnet",
+      "seedType": "username",
+      "depth": 2,
+      "truncated": false,
+      "generatedAt": "2026-05-03T00:00:00Z",
+      "nodeCount": 15,
+      "edgeCount": 18,
+      "sources": [
+        "gh-api",
+        "WebSearch"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "name": "@ruflo/dossier",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Dossier viewer UI — CIA-style classified document chrome at dossier.ruv.io. Sibling to goal.ruv.io / @ruflo/research. ADR-104.",
+  "type": "module",
+  "scripts": {
+    "predev": "node scripts/sync-dossiers.mjs",
+    "dev": "vite",
+    "prebuild": "node scripts/sync-dossiers.mjs",
+    "build": "tsc -b --noEmit && vite build",
+    "preview": "vite preview --port 8080 --host 0.0.0.0",
+    "lint": "tsc -b --noEmit",
+    "functions:dev": "tsx functions/server.ts",
+    "start": "tsx functions/server.ts",
+    "gcp-build": "echo 'gcp-build noop — Cloud Run boots via npm start (tsx functions/server.ts); frontend Vite build runs locally before deploy. See scripts/gcp-deploy-cloudrun.sh.'",
+    "functions:deploy": "bash scripts/gcp-deploy-cloudrun.sh"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.14",
+    "hono": "^4.12.16",
+    "mermaid": "^11.4.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0",
+    "tsx": "^4.21.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10"
+  }
+}
