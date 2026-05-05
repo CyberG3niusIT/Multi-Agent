@@ -166,13 +166,25 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
+          # We install the published `ruflo@alpha` umbrella inside an isolated
+          # temp dir rather than running the source-tree CLI directly, because
+          # the source-tree CLI imports the sibling workspace package
+          # `@claude-flow/cli-core` (split out in #1764) which is not always
+          # resolvable from a source checkout. `npm install ruflo@alpha`
+          # mirrors what real users hit (`npx ruflo`) and gives us a clean
+          # self-contained `node_modules/@claude-flow/cli/bin/cli.js`.
           $ErrorActionPreference = 'Stop'
           $tmp = Join-Path $env:RUNNER_TEMP 'daemon-1766'
           if (Test-Path $tmp) { Remove-Item -Recurse -Force $tmp }
           New-Item -ItemType Directory -Path $tmp | Out-Null
-          $cli = Join-Path $env:GITHUB_WORKSPACE 'v3/@claude-flow/cli/bin/cli.js'
-          if (-not (Test-Path $cli)) { throw "CLI not found at $cli" }
           Set-Location $tmp
+          npm init -y | Out-Null
+          npm install ruflo@alpha --no-audit --no-fund --silent
+          $cli = Join-Path $tmp 'node_modules/@claude-flow/cli/bin/cli.js'
+          if (-not (Test-Path $cli)) { throw "CLI not found at $cli after npm install" }
+          $rufloVer = (Get-Content (Join-Path $tmp 'node_modules/ruflo/package.json') | ConvertFrom-Json).version
+          $cliVer   = (Get-Content (Join-Path $tmp 'node_modules/@claude-flow/cli/package.json') | ConvertFrom-Json).version
+          Write-Host "Testing daemon survival for ruflo@$rufloVer (@claude-flow/cli@$cliVer)"
 
           # Spawn daemon from a child PowerShell that exits immediately after
           # the spawn returns — this is the npx-wrapper-exits scenario from #1766.
@@ -186,7 +198,7 @@ jobs:
 
           $pidFile = Join-Path $tmp '.claude-flow/daemon.pid'
           if (-not (Test-Path $pidFile)) {
-            throw "FAIL: pid file $pidFile was never written — daemon failed to start (see [start:err] above; common cause: dist/ missing because npm run build:ts swallowed a tsc error)"
+            throw "FAIL: pid file $pidFile was never written — daemon failed to start (see [start:err] above)"
           }
           $daemonPid = (Get-Content $pidFile).Trim()
           Write-Host "Daemon recorded PID = $daemonPid"
@@ -196,9 +208,9 @@ jobs:
           Start-Sleep -Seconds 5
           $proc = Get-Process -Id $daemonPid -ErrorAction SilentlyContinue
           if ($null -eq $proc) {
-            throw "FAIL: daemon PID $daemonPid is no longer running 5s after parent exit (regression of #1766)"
+            throw "FAIL: daemon PID $daemonPid is no longer running 5s after parent exit (regression of #1766 in ruflo@$rufloVer)"
           }
-          Write-Host "PASS: daemon PID $daemonPid alive 5s after parent exit"
+          Write-Host "PASS: daemon PID $daemonPid alive 5s after parent exit (ruflo@$rufloVer)"
 
           # Cleanup: graceful stop, then force-kill if it lingers.
           node $cli daemon stop 2>&1 | ForEach-Object { Write-Host "[stop] $_" }
