@@ -1,8 +1,8 @@
 {
   "manifest": {
     "schema": "ruflo-witness/v1",
-    "issuedAt": "2026-05-09T20:24:49.800Z",
-    "gitCommit": "c789c27a844edf45c5a87bdb4538beb4126777d2",
+    "issuedAt": "2026-05-09T22:32:50.170Z",
+    "gitCommit": "cd7746e7b0bf076747fd61bbb1fe3768b26217a4",
     "branch": "feat/adr-100-promote-097-phase2",
     "os": "macos",
     "releases": {
@@ -12,8 +12,8 @@
       "@claude-flow/memory": "3.0.0-alpha.15"
     },
     "summary": {
-      "totalFixes": 90,
-      "verified": 90,
+      "totalFixes": 91,
+      "verified": 91,
       "missing": 0
     },
     "fixes": [
@@ -229,7 +229,7 @@
         "id": "G2",
         "desc": "federation real Ed25519 signing/verification",
         "file": "v3/@claude-flow/plugin-agent-federation/dist/plugin.js",
-        "sha256": "881dad4fa9dc19a539c1a46dfe27c77984596cdd05759937909aacf028378acc",
+        "sha256": "088d6a7fb05f4c4f69bc388d02f8273d9d16f7bf6aa20ca062c26623ce97cc75",
         "marker": "@noble/ed25519",
         "markerVerified": true
       },
@@ -736,15 +736,23 @@
         "sha256": "77276a90c163d852058b5337bb21efcc59d7eb2422fc6debe10176c08752bf51",
         "marker": "InMemorySpendReporter",
         "markerVerified": true
+      },
+      {
+        "id": "ADR-104-transport",
+        "desc": "Federation plugin wires real wire transport via agentic-flow/transport/loader (loadQuicTransport). plugin.ts loads transport in initialize(), binds optional listener on config.port, closes on shutdown. sendToNode now does real ws send to peer endpoint resolved via discovery.getPeer. Validated mac↔ruvultra over tailscale (150ms real send).",
+        "file": "v3/@claude-flow/plugin-agent-federation/dist/plugin.js",
+        "sha256": "088d6a7fb05f4c4f69bc388d02f8273d9d16f7bf6aa20ca062c26623ce97cc75",
+        "marker": "agentic-flow/transport/loader",
+        "markerVerified": true
       }
     ]
   },
   "integrity": {
     "manifestHashAlgo": "sha256",
-    "manifestHash": "ea072f1dec504093eb222cf2bdf5384cec457bb5fd42e32db0692582c27bec59",
+    "manifestHash": "3d61bc5519e250735884870a9749f0733783e2f80c1b6f02b78e31f5fc1154ea",
     "signatureAlgo": "ed25519",
-    "publicKey": "1a87be592ea9332f110425a4de82e68f406271c92b72aa7efff0a14ba7879acd",
-    "signature": "9f44b794cc9e6dcb4f3cdf50c107c3d21722f3d574fc23a48a7d3d67842405756ea8cef4e18c5d1d46b8066b56e1db521cccbcf3a083d4fe86ca21aabadae109",
+    "publicKey": "4b503be1070b10ebe1bbd96918edadce66175838eca0dbb09a868367889e7d84",
+    "signature": "92edc34b3cc0bcf33f5125c3418e658b2f0582778216d25f55ed810bb89b67491636808bf964568ea7278292ba6d721166fba368afcc0eb48f2f9115fa2c2202",
     "seedDerivation": "sha256(gitCommit + ':ruflo-witness/v1')"
   }
 }

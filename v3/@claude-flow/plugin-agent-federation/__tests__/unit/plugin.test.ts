@@ -94,9 +94,12 @@ describe('AgentFederationPlugin', () => {
       expect(context.services.register).toHaveBeenCalled();
     });
 
-    it('should register 7 services in the container', async () => {
+    it('should register 8 services in the container', async () => {
+      // 7 original + federation:transport (ADR-104, registered iff
+      // loadQuicTransport succeeded — succeeds in this env since
+      // agentic-flow's loader has no required peers)
       await plugin.initialize(context as any);
-      expect(context.services.register).toHaveBeenCalledTimes(7);
+      expect(context.services.register).toHaveBeenCalledTimes(8);
     });
 
     it('should register federation:coordinator service', async () => {
