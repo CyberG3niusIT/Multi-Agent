@@ -175,9 +175,10 @@ describe('AgentFederationPlugin', () => {
   });
 
   describe('registerMCPTools', () => {
-    it('should return 9 MCP tool definitions', () => {
+    it('should return 12 MCP tool definitions', () => {
+      // 9 original + 3 ADR-097 Phase 4 (breaker_status, evict, reactivate)
       const tools = plugin.registerMCPTools();
-      expect(tools).toHaveLength(9);
+      expect(tools).toHaveLength(12);
     });
 
     it.each([
@@ -190,6 +191,10 @@ describe('AgentFederationPlugin', () => {
       'federation_trust',
       'federation_audit',
       'federation_consensus',
+      // ADR-097 Phase 4
+      'federation_breaker_status',
+      'federation_evict',
+      'federation_reactivate',
     ] as const)('should include tool "%s"', (expectedName) => {
       const tools = plugin.registerMCPTools();
       const names = tools.map((t) => t.name);

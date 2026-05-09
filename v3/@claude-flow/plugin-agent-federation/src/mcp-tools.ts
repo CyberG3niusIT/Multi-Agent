@@ -235,6 +235,77 @@ export function createMcpTools(
       },
     },
     {
+      name: 'federation_breaker_status',
+      description: 'ADR-097 Phase 4: per-peer circuit-breaker state snapshot. Returns each known peer with its lifecycle state (ACTIVE/SUSPENDED/EVICTED), when it changed, and why. Combine with federation_evict / federation_reactivate to operate the breaker manually.',
+      pluginName: '@claude-flow/plugin-agent-federation',
+      version: '1.0.0-alpha.1',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          nodeId: { type: 'string', description: 'Optional: filter to a single peer' },
+        },
+      },
+      handler: async (params) => {
+        const coordinator = requireCoordinator();
+        const states = coordinator.getPeerStates();
+        const filter = params['nodeId'] as string | undefined;
+        const filtered = filter ? states.filter((s) => s.nodeId === filter) : states;
+        const counts = coordinator.getPeerStateCounts();
+        return textResult(JSON.stringify({ counts, peers: filtered }, null, 2));
+      },
+    },
+    {
+      name: 'federation_evict',
+      description: 'ADR-097 Phase 4: operator-initiated evict for a peer. Marks the peer EVICTED so subsequent federation_send calls short-circuit with PEER_EVICTED. Reversible only via federation_reactivate (operator override).',
+      pluginName: '@claude-flow/plugin-agent-federation',
+      version: '1.0.0-alpha.1',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          nodeId: { type: 'string', description: 'Target peer to evict' },
+          correlationId: { type: 'string', description: 'Optional audit-trail correlation key (operator ticket, etc.)' },
+        },
+        required: ['nodeId'],
+      },
+      handler: async (params) => {
+        const coordinator = requireCoordinator();
+        const ok = await coordinator.evictPeer(
+          params['nodeId'] as string,
+          'MANUAL_EVICT',
+          params['correlationId'] as string | undefined,
+        );
+        const msg = ok
+          ? `Evicted peer ${params['nodeId']}`
+          : `No transition (peer unknown or already EVICTED): ${params['nodeId']}`;
+        return textResult(msg, !ok);
+      },
+    },
+    {
+      name: 'federation_reactivate',
+      description: 'ADR-097 Phase 4: operator-initiated reactivate for a SUSPENDED or EVICTED peer. Used after a health probe confirms recovery, or as an operator override on a manual evict. The breaker does NOT auto-reactivate; this MCP tool is the explicit lever.',
+      pluginName: '@claude-flow/plugin-agent-federation',
+      version: '1.0.0-alpha.1',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          nodeId: { type: 'string', description: 'Target peer to reactivate' },
+          correlationId: { type: 'string', description: 'Optional audit-trail correlation key (probe ID, ticket, etc.)' },
+        },
+        required: ['nodeId'],
+      },
+      handler: async (params) => {
+        const coordinator = requireCoordinator();
+        const ok = await coordinator.reactivatePeer(
+          params['nodeId'] as string,
+          params['correlationId'] as string | undefined,
+        );
+        const msg = ok
+          ? `Reactivated peer ${params['nodeId']}`
+          : `No transition (peer unknown or already ACTIVE): ${params['nodeId']}`;
+        return textResult(msg, !ok);
+      },
+    },
+    {
       name: 'federation_consensus',
       description: 'Propose a federated consensus operation across all active peers',
       pluginName: '@claude-flow/plugin-agent-federation',

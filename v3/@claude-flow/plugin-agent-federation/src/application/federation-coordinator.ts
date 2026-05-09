@@ -1,7 +1,11 @@
-import { FederationNode } from '../domain/entities/federation-node.js';
+import { FederationNode, type FederationNodeStateRecord } from '../domain/entities/federation-node.js';
 import { FederationSession } from '../domain/entities/federation-session.js';
 import { type FederationMessageType } from '../domain/entities/federation-envelope.js';
 import { TrustLevel } from '../domain/entities/trust-level.js';
+import {
+  FederationNodeState,
+  type SuspensionReason,
+} from '../domain/value-objects/federation-node-state.js';
 import { DiscoveryService, type FederationManifest } from '../domain/services/discovery-service.js';
 import { HandshakeService } from '../domain/services/handshake-service.js';
 import { RoutingService, type RoutingResult } from '../domain/services/routing-service.js';
@@ -330,6 +334,99 @@ export class FederationCoordinator {
       trustLevels,
       healthy: this.initialized,
     };
+  }
+
+  /**
+   * ADR-097 Phase 4: per-peer breaker state snapshot for the doctor
+   * surface and `federation_breaker_status` MCP tool.
+   *
+   * Returns one entry per known peer with the entity's stateRecord —
+   * what state, when it changed, why, and which caller's correlation
+   * key triggered it. Pure read; does not mutate.
+   */
+  getPeerStates(): readonly (FederationNodeStateRecord & { readonly nodeId: string })[] {
+    return this.discovery.listPeers().map((peer) => ({
+      nodeId: peer.nodeId,
+      ...peer.stateRecord,
+    }));
+  }
+
+  /**
+   * Aggregated counts for the doctor surface — `{ active: N, suspended: M,
+   * evicted: K }`. Cheap O(peers) sweep; safe to call from a status line.
+   */
+  getPeerStateCounts(): { readonly active: number; readonly suspended: number; readonly evicted: number } {
+    let active = 0;
+    let suspended = 0;
+    let evicted = 0;
+    for (const peer of this.discovery.listPeers()) {
+      switch (peer.state) {
+        case FederationNodeState.ACTIVE: active++; break;
+        case FederationNodeState.SUSPENDED: suspended++; break;
+        case FederationNodeState.EVICTED: evicted++; break;
+      }
+    }
+    return { active, suspended, evicted };
+  }
+
+  /**
+   * Operator-initiated evict. Returns true on transition, false if the
+   * peer was already EVICTED or unknown. Logs to audit either way.
+   *
+   * Does NOT remove the peer from the discovery registry — `leavePeer`
+   * is the registry-removal API. Eviction is the breaker layer; the peer
+   * remains queryable so the operator can later reactivate.
+   */
+  async evictPeer(
+    nodeId: string,
+    reason: SuspensionReason = 'MANUAL_EVICT',
+    correlationId?: string,
+  ): Promise<boolean> {
+    this.ensureInitialized();
+    const peer = this.discovery.getPeer(nodeId);
+    if (!peer) return false;
+
+    const ok = peer.evict({ reason, correlationId });
+    await this.audit.log('threat_blocked', {
+      targetNodeId: nodeId,
+      metadata: {
+        reason,
+        correlationId: correlationId ?? null,
+        state: peer.state,
+        applied: ok,
+      },
+    });
+    if (ok) {
+      const session = this.findSessionByNodeId(nodeId);
+      if (session) {
+        session.terminate();
+        this.sessions.delete(session.sessionId);
+      }
+    }
+    return ok;
+  }
+
+  /**
+   * Operator-initiated reactivate. Used after an integrator-supplied
+   * health probe confirms a SUSPENDED peer is healthy, OR as an
+   * operator-override escape from EVICTED. Returns true on transition.
+   */
+  async reactivatePeer(nodeId: string, correlationId?: string): Promise<boolean> {
+    this.ensureInitialized();
+    const peer = this.discovery.getPeer(nodeId);
+    if (!peer) return false;
+
+    const ok = peer.reactivate(correlationId);
+    await this.audit.log('trust_level_changed', {
+      targetNodeId: nodeId,
+      metadata: {
+        action: 'reactivate',
+        correlationId: correlationId ?? null,
+        state: peer.state,
+        applied: ok,
+      },
+    });
+    return ok;
   }
 
   getSession(sessionId: string): FederationSession | undefined {
