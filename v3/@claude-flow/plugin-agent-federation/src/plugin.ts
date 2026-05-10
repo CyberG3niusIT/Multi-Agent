@@ -42,6 +42,7 @@ import {
   loadQuicTransport,
   type AgentMessage,
 } from 'agentic-flow/transport/loader';
+import { dispatchInbound, canonicalizeEnvelopeForVerify } from './application/inbound-dispatcher.js';
 import { createMcpTools } from './mcp-tools.js';
 import { createCliCommands } from './cli-commands.js';
 
@@ -296,7 +297,11 @@ export class AgentFederationPlugin implements ClaudeFlowPlugin {
           );
           throw new Error(`PEER_UNKNOWN: ${targetNodeId}`);
         }
-        const message: AgentMessage = {
+        // Build the AgentMessage WITHOUT signature first, canonicalize
+        // the bytes, sign them, then attach the signature to metadata.
+        // The receiver runs the same canonicalization and verifies
+        // against this node's published public key.
+        const baseMessage: AgentMessage = {
           id: envelope.envelopeId,
           type: envelope.messageType,
           payload: envelope as unknown,
@@ -306,9 +311,15 @@ export class AgentFederationPlugin implements ClaudeFlowPlugin {
             sessionId: envelope.sessionId,
           },
         };
-        await transport.send(address, message);
+        const canon = canonicalizeEnvelopeForVerify(baseMessage);
+        const signature = signBytes(canon);
+        const signed: AgentMessage = {
+          ...baseMessage,
+          metadata: { ...(baseMessage.metadata as Record<string, unknown>), signature },
+        };
+        await transport.send(address, signed);
         context.logger.debug(
-          `Federation send → ${address} (envelope=${envelope.envelopeId}, type=${envelope.messageType})`,
+          `Federation send → ${address} (envelope=${envelope.envelopeId}, type=${envelope.messageType}, signed)`,
         );
       },
       getActiveSessions: () => Array.from(sessions.values()).filter(s => s.active),
@@ -348,6 +359,38 @@ export class AgentFederationPlugin implements ClaudeFlowPlugin {
             (err instanceof Error ? err.message : String(err)),
         );
       }
+    }
+
+    // ADR-109: subscribe to inbound messages. transport.onMessage was
+    // added in agentic-flow@2.0.12-fix.3 — older builds gracefully
+    // degrade (optional method, no-op via the ?? guard).
+    if (transport && typeof transport.onMessage === 'function') {
+      // Real Ed25519 envelope verifier — closes the inbound trust gap
+      // (without this, sourceNodeId in metadata is a self-claim, not
+      // an authenticated assertion).
+      const verifyEnvelope = (
+        canonicalBytes: string,
+        signatureHex: string | null,
+        peerPublicKeyHex: string,
+      ): boolean => {
+        if (!signatureHex || !peerPublicKeyHex) return false;
+        return verifyBytes(canonicalBytes, signatureHex, peerPublicKeyHex);
+      };
+      transport.onMessage(async (address: string, message: AgentMessage) => {
+        await dispatchInbound(address, message, {
+          discovery,
+          audit,
+          eventBus: context.eventBus,
+          logger: context.logger,
+          verifyEnvelope,
+        });
+      });
+      context.logger.debug('Federation inbound dispatcher subscribed (with Ed25519 sig verify)');
+    } else {
+      context.logger.warn(
+        'Federation transport does not expose onMessage(); inbound bytes will queue but not dispatch. ' +
+          'Upgrade agentic-flow to >= 2.0.12-fix.3.',
+      );
     }
 
     context.logger.info('Agent Federation plugin initialized');
