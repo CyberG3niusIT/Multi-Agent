@@ -1,6 +1,6 @@
 //! Options pane — OPTIONS verb (symbol-prefixed) → OPTIONS.RESULT (chain).
 
-use aperture_data::{DataSource, StubDataSource};
+use aperture_data::{DataSource, MemoryDataSource};
 use aperture_swarm::{reply, Agent, Envelope};
 use serde_json::json;
 
@@ -9,7 +9,7 @@ use crate::agent_runner::{symbol_of, verb};
 pub struct OptionsPane {
     id: &'static str,
     focus: Option<String>,
-    source: StubDataSource,
+    source: MemoryDataSource,
 }
 
 impl OptionsPane {
@@ -17,7 +17,7 @@ impl OptionsPane {
         Self {
             id: "aperture:pane.options",
             focus: None,
-            source: StubDataSource,
+            source: MemoryDataSource,
         }
     }
 }

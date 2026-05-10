@@ -1,6 +1,6 @@
 //! Correlation matrix pane — CORR verb (bare, `symbols` array in payload) → CORR.RESULT.
 
-use aperture_data::{DataSource, StubDataSource};
+use aperture_data::{DataSource, MemoryDataSource};
 use aperture_swarm::{reply, Agent, Envelope};
 use serde_json::{json, Value};
 
@@ -8,14 +8,14 @@ use crate::agent_runner::verb;
 
 pub struct CorrPane {
     id: &'static str,
-    source: StubDataSource,
+    source: MemoryDataSource,
 }
 
 impl CorrPane {
     pub fn new() -> Self {
         Self {
             id: "aperture:pane.corr",
-            source: StubDataSource,
+            source: MemoryDataSource,
         }
     }
 }

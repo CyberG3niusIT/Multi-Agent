@@ -1,6 +1,6 @@
 //! Sentiment pane — SENTIMENT verb (symbol-prefixed) → SENTIMENT.RESULT.
 
-use aperture_data::{DataSource, StubDataSource};
+use aperture_data::{DataSource, MemoryDataSource};
 use aperture_swarm::{reply, Agent, Envelope};
 use serde_json::json;
 
@@ -9,7 +9,7 @@ use crate::agent_runner::{symbol_of, verb};
 pub struct SentimentPane {
     id: &'static str,
     focus: Option<String>,
-    source: StubDataSource,
+    source: MemoryDataSource,
 }
 
 impl SentimentPane {
@@ -17,7 +17,7 @@ impl SentimentPane {
         Self {
             id: "aperture:pane.sentiment",
             focus: None,
-            source: StubDataSource,
+            source: MemoryDataSource,
         }
     }
 }

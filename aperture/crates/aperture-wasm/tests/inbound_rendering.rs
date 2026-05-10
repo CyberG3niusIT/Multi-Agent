@@ -100,7 +100,7 @@ fn inbox_result_renders_messages_in_inbox_pane() {
 
 #[test]
 fn risk_result_renders_rows_in_risk_pane() {
-    // Uses the canonical `vol_annualised` field that `StubDataSource::risk_metrics`
+    // Uses the canonical `vol_annualised` field that `MemoryDataSource::risk_metrics`
     // emits; the renderer also accepts the legacy `volatility` alias.
     let env = inbound(
         "RISK.RESULT",
@@ -116,7 +116,7 @@ fn risk_result_renders_rows_in_risk_pane() {
 
 #[test]
 fn options_result_renders_chain_in_options_pane() {
-    // Stub options chain rows have `call_iv` / `put_iv` / `call_oi` / `put_oi`,
+    // MemoryDataSource options chain rows have `call_iv` / `put_iv` / `call_oi` / `put_oi`,
     // not a flat `iv`/`oi`/`type`. Pin the renderer to that shape.
     let env = inbound(
         "OPTIONS.RESULT",
@@ -168,7 +168,7 @@ fn crypto_result_renders_in_crypto_pane() {
 
 #[test]
 fn corpact_result_renders_events_in_corpact_pane() {
-    // Stub event shapes:
+    // MemoryDataSource event shapes:
     //   dividend: {type, ex_date, amount, currency}
     //   split:    {type, ex_date, ratio}
     //   earnings: {type, date}

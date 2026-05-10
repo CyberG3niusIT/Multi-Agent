@@ -24,6 +24,6 @@ async fn main() -> Result<()> {
     let provider = args
         .iter()
         .find_map(|a| a.strip_prefix("--provider="))
-        .unwrap_or("stub");
+        .unwrap_or("memory");
     app::run(provider).await
 }

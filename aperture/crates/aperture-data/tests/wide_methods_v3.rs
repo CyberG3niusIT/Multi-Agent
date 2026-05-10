@@ -1,6 +1,6 @@
-//! Wave-3a stub-method tests for the 9 new market-info methods on
-//! `StubDataSource`. Each test:
-//!   * Constructs a `StubDataSource`.
+//! Wave-3a tests for the 9 new market-info methods on
+//! `MemoryDataSource`. Each test:
+//!   * Constructs a `MemoryDataSource`.
 //!   * Calls the method twice with the same input and asserts bit-equal
 //!     output (determinism).
 //!   * Validates the returned `Payload` (JSON) shape.
@@ -13,10 +13,10 @@ use std::pin::Pin;
 use std::sync::Arc;
 use std::task::{Context, Poll, Wake, Waker};
 
-use aperture_data::{DataSource, Payload, StubDataSource};
+use aperture_data::{DataSource, Payload, MemoryDataSource};
 
 /// Minimal executor: poll the future repeatedly with a no-op waker. Safe
-/// because `StubDataSource`'s methods never `.await` on real I/O.
+/// because `MemoryDataSource`'s methods never `.await` on real I/O.
 fn block_on<F: Future>(mut fut: F) -> F::Output {
     struct NoopWake;
     impl Wake for NoopWake {
@@ -35,7 +35,7 @@ fn block_on<F: Future>(mut fut: F) -> F::Output {
 }
 
 fn assert_payload_eq(a: &Payload, b: &Payload, what: &str) {
-    assert_eq!(a, b, "{what}: stub provider must be deterministic");
+    assert_eq!(a, b, "{what}: in-memory provider must be deterministic");
 }
 
 // ---------------------------------------------------------------------------
@@ -44,7 +44,7 @@ fn assert_payload_eq(a: &Payload, b: &Payload, what: &str) {
 
 #[test]
 fn earnings_calendar_default_window_returns_events() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let a = block_on(s.earnings_calendar(None)).expect("earnings_calendar(None)");
     let b = block_on(s.earnings_calendar(None)).expect("earnings_calendar(None) #2");
     assert_payload_eq(&a, &b, "earnings_calendar(None)");
@@ -73,7 +73,7 @@ fn earnings_calendar_default_window_returns_events() {
 
 #[test]
 fn earnings_calendar_explicit_window_echoes_back() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let a = block_on(s.earnings_calendar(Some(30))).expect("earnings_calendar(Some(30))");
     let b = block_on(s.earnings_calendar(Some(30))).expect("earnings_calendar(Some(30)) #2");
     assert_payload_eq(&a, &b, "earnings_calendar(Some(30))");
@@ -86,7 +86,7 @@ fn earnings_calendar_explicit_window_echoes_back() {
 
 #[test]
 fn movers_default_scope_is_gainers() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let a = block_on(s.movers(None)).expect("movers(None)");
     let b = block_on(s.movers(None)).expect("movers(None) #2");
     assert_payload_eq(&a, &b, "movers(None)");
@@ -97,7 +97,7 @@ fn movers_default_scope_is_gainers() {
 
 #[test]
 fn movers_losers_scope_returns_negative_changes() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let a = block_on(s.movers(Some("losers"))).expect("movers(\"losers\")");
     let b = block_on(s.movers(Some("losers"))).expect("movers(\"losers\") #2");
     assert_payload_eq(&a, &b, "movers(Some(\"losers\"))");
@@ -115,7 +115,7 @@ fn movers_losers_scope_returns_negative_changes() {
 
 #[test]
 fn movers_active_scope_returns_volume_rows() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let a = block_on(s.movers(Some("active"))).expect("movers(\"active\")");
     let b = block_on(s.movers(Some("active"))).expect("movers(\"active\") #2");
     assert_payload_eq(&a, &b, "movers(Some(\"active\"))");
@@ -136,7 +136,7 @@ fn movers_active_scope_returns_volume_rows() {
 
 #[test]
 fn screener_default_returns_matches() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let a = block_on(s.screener(None)).expect("screener(None)");
     let b = block_on(s.screener(None)).expect("screener(None) #2");
     assert_payload_eq(&a, &b, "screener(None)");
@@ -150,7 +150,7 @@ fn screener_default_returns_matches() {
 
 #[test]
 fn screener_with_criteria_echoes_string() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let q = "market_cap>1e12";
     let a = block_on(s.screener(Some(q))).expect("screener(Some)");
     let b = block_on(s.screener(Some(q))).expect("screener(Some) #2");
@@ -164,7 +164,7 @@ fn screener_with_criteria_echoes_string() {
 
 #[test]
 fn index_members_dji_returns_roster() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let a = block_on(s.index_members("DJI")).expect("index_members(DJI)");
     let b = block_on(s.index_members("DJI")).expect("index_members(DJI) #2");
     assert_payload_eq(&a, &b, "index_members(DJI)");
@@ -175,7 +175,7 @@ fn index_members_dji_returns_roster() {
 
 #[test]
 fn index_members_ndx_returns_roster() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let a = block_on(s.index_members("NDX")).expect("index_members(NDX)");
     let b = block_on(s.index_members("NDX")).expect("index_members(NDX) #2");
     assert_payload_eq(&a, &b, "index_members(NDX)");
@@ -186,7 +186,7 @@ fn index_members_ndx_returns_roster() {
 
 #[test]
 fn index_members_spx_returns_roster() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let a = block_on(s.index_members("SPX")).expect("index_members(SPX)");
     let b = block_on(s.index_members("SPX")).expect("index_members(SPX) #2");
     assert_payload_eq(&a, &b, "index_members(SPX)");
@@ -216,7 +216,7 @@ fn index_members_spx_returns_roster() {
 
 #[test]
 fn vol_surface_returns_grid_of_strikes_and_expiries() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let a = block_on(s.vol_surface("AAPL")).expect("vol_surface(AAPL)");
     let b = block_on(s.vol_surface("AAPL")).expect("vol_surface(AAPL) #2");
     assert_payload_eq(&a, &b, "vol_surface(AAPL)");
@@ -249,7 +249,7 @@ fn vol_surface_returns_grid_of_strikes_and_expiries() {
 
 #[test]
 fn technicals_sma_returns_finite_value() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let a = block_on(s.technicals("AAPL", "SMA")).expect("technicals(AAPL, SMA)");
     let b = block_on(s.technicals("AAPL", "SMA")).expect("technicals(AAPL, SMA) #2");
     assert_payload_eq(&a, &b, "technicals(AAPL, SMA)");
@@ -263,7 +263,7 @@ fn technicals_sma_returns_finite_value() {
 
 #[test]
 fn technicals_rsi_returns_value() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let a = block_on(s.technicals("AAPL", "RSI")).expect("technicals(AAPL, RSI)");
     let b = block_on(s.technicals("AAPL", "RSI")).expect("technicals(AAPL, RSI) #2");
     assert_payload_eq(&a, &b, "technicals(AAPL, RSI)");
@@ -274,7 +274,7 @@ fn technicals_rsi_returns_value() {
 
 #[test]
 fn technicals_macd_returns_value() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let a = block_on(s.technicals("AAPL", "MACD")).expect("technicals(AAPL, MACD)");
     let b = block_on(s.technicals("AAPL", "MACD")).expect("technicals(AAPL, MACD) #2");
     assert_payload_eq(&a, &b, "technicals(AAPL, MACD)");
@@ -288,7 +288,7 @@ fn technicals_macd_returns_value() {
 
 #[test]
 fn technicals_unknown_indicator_returns_error() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let res = block_on(s.technicals("AAPL", "NOPE"));
     assert!(
         res.is_err(),
@@ -302,7 +302,7 @@ fn technicals_unknown_indicator_returns_error() {
 
 #[test]
 fn correlation_matrix_diagonal_is_unity_and_deterministic() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let symbols = vec!["AAPL".to_string(), "MSFT".to_string()];
     let a = block_on(s.correlation_matrix(&symbols)).expect("correlation_matrix");
     let b = block_on(s.correlation_matrix(&symbols)).expect("correlation_matrix #2");
@@ -334,7 +334,7 @@ fn correlation_matrix_diagonal_is_unity_and_deterministic() {
 
 #[test]
 fn filings_returns_non_empty_list_of_forms() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let a = block_on(s.filings("AAPL")).expect("filings(AAPL)");
     let b = block_on(s.filings("AAPL")).expect("filings(AAPL) #2");
     assert_payload_eq(&a, &b, "filings(AAPL)");
@@ -359,7 +359,7 @@ fn filings_returns_non_empty_list_of_forms() {
 
 #[test]
 fn sentiment_returns_score_label_and_sources() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let a = block_on(s.sentiment("AAPL")).expect("sentiment(AAPL)");
     let b = block_on(s.sentiment("AAPL")).expect("sentiment(AAPL) #2");
     assert_payload_eq(&a, &b, "sentiment(AAPL)");

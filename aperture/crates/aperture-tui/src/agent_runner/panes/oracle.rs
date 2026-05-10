@@ -1,4 +1,6 @@
-//! Oracle pane — ASK verb routes to ruflo-neural-trader (stub for Phase B).
+//! Oracle pane — ASK verb. In-process synthesis: wraps the prompt with focus
+//! + recent context. The full ruflo-neural-trader integration will route ASK
+//! envelopes through the swarm bus when the dispatcher exposes that channel.
 
 use aperture_swarm::{reply, Agent, Envelope};
 use serde_json::{json, Value};
@@ -33,12 +35,7 @@ impl Agent for OraclePane {
                     .and_then(Value::as_str)
                     .unwrap_or("")
                     .to_string();
-                // TODO(phase-c): forward prompt to ruflo-neural-trader via
-                // the swarm bus instead of returning a stub response.
-                let answer = format!(
-                    "(stub) received prompt of {} chars; will route to ruflo-neural-trader in Phase C",
-                    prompt.len()
-                );
+                let answer = synthesize_answer(&prompt, self.focus.as_deref());
                 vec![reply(
                     &env,
                     json!({
@@ -58,6 +55,50 @@ impl Agent for OraclePane {
     }
 }
 
+/// In-process synthesis for ASK prompts. Builds a 2–3 line answer that:
+///  1. acknowledges the focus symbol when set,
+///  2. summarises the prompt by length tier (short / medium / long),
+///  3. suggests next panes to consult based on simple keyword matching.
+fn synthesize_answer(prompt: &str, focus: Option<&str>) -> String {
+    let trimmed = prompt.trim();
+    let len = trimmed.chars().count();
+    let tier = if len == 0 {
+        "empty"
+    } else if len < 40 {
+        "short"
+    } else if len < 200 {
+        "medium"
+    } else {
+        "long"
+    };
+
+    let lower = trimmed.to_ascii_lowercase();
+    let mut suggestions: Vec<&str> = Vec::new();
+    if lower.contains("earnings") {
+        suggestions.push("pane.earnings");
+    }
+    if lower.contains("yield") || lower.contains("rate") {
+        suggestions.push("pane.yields");
+    }
+    if lower.contains("vol") || lower.contains("volatility") {
+        suggestions.push("pane.ivol");
+    }
+    if lower.contains("headline") || lower.contains("news") {
+        suggestions.push("pane.news");
+    }
+    if suggestions.is_empty() {
+        suggestions.extend(["pane.quote", "pane.chart", "pane.financials"]);
+    }
+
+    let focus_line = match focus {
+        Some(sym) if !sym.is_empty() => format!("Focus: {sym}."),
+        _ => "Focus: none set (use SYMBOL FOCUS GO).".to_string(),
+    };
+    let summary_line = format!("Prompt is {tier} ({len} chars).");
+    let suggest_line = format!("Next: {}.", suggestions.join(", "));
+    format!("{focus_line}\n{summary_line}\n{suggest_line}")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -72,5 +113,19 @@ mod tests {
             .await;
         assert_eq!(outs.len(), 1);
         assert_eq!(outs[0].payload["verb"], "ASK.RESULT");
+    }
+
+    #[tokio::test]
+    async fn earnings_keyword_routes_to_earnings_pane() {
+        let mut p = OraclePane::new();
+        let outs = p
+            .handle(req("ASK", json!({"prompt": "earnings season outlook"})))
+            .await;
+        assert_eq!(outs.len(), 1);
+        let answer = outs[0].payload["answer"].as_str().expect("answer string");
+        assert!(
+            answer.contains("pane.earnings"),
+            "expected earnings suggestion, got: {answer}"
+        );
     }
 }

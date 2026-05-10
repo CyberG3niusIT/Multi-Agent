@@ -1,6 +1,6 @@
 //! Movers pane — MOVERS verb (bare, optional `scope: gainers|losers|active`) → MOVERS.RESULT.
 
-use aperture_data::{DataSource, StubDataSource};
+use aperture_data::{DataSource, MemoryDataSource};
 use aperture_swarm::{reply, Agent, Envelope};
 use serde_json::{json, Value};
 
@@ -8,14 +8,14 @@ use crate::agent_runner::verb;
 
 pub struct MoversPane {
     id: &'static str,
-    source: StubDataSource,
+    source: MemoryDataSource,
 }
 
 impl MoversPane {
     pub fn new() -> Self {
         Self {
             id: "aperture:pane.movers",
-            source: StubDataSource,
+            source: MemoryDataSource,
         }
     }
 }

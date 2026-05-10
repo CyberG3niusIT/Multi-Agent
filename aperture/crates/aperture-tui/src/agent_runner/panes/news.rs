@@ -1,6 +1,6 @@
 //! News pane — NEWS verb (per-symbol or global) → NEWS.RESULT.
 
-use aperture_data::{DataSource, StubDataSource};
+use aperture_data::{DataSource, MemoryDataSource};
 use aperture_swarm::{reply, Agent, Envelope};
 use serde_json::json;
 
@@ -9,7 +9,7 @@ use crate::agent_runner::{symbol_of, verb};
 pub struct NewsPane {
     id: &'static str,
     focus: Option<String>,
-    source: StubDataSource,
+    source: MemoryDataSource,
 }
 
 impl NewsPane {
@@ -17,7 +17,7 @@ impl NewsPane {
         Self {
             id: "aperture:pane.news",
             focus: None,
-            source: StubDataSource,
+            source: MemoryDataSource,
         }
     }
 }

@@ -1,7 +1,7 @@
 //! Data layer abstractions: `DataSource` for market feeds, `KeyValueStore`
 //! for persistence (watchlists, last-seen). Real providers (yahoo, fred,
 //! coingecko, ...) live in sibling crates and are wired in behind cargo
-//! features in later phases. v0.1 ships only the `stub` provider.
+//! features in later phases. v0.1 ships only the `memory` provider.
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
@@ -49,7 +49,7 @@ pub trait DataSource: Send + Sync {
     // --- Wide market-info methods ----------------------------------------
     // Default implementations return `Provider("not supported")` so future
     // single-purpose providers (e.g. yahoo, fred) can opt into only the
-    // methods they cover. `StubDataSource` overrides every method with
+    // methods they cover. `MemoryDataSource` overrides every method with
     // deterministic data.
 
     async fn news(&self, _symbol: Option<&str>) -> Result<Payload, DataError> {
@@ -129,7 +129,7 @@ pub trait KeyValueStore: Send + Sync {
     fn delete(&self, key: &str) -> Result<(), KvError>;
 }
 
-#[cfg(feature = "stub")]
-pub mod stub;
-#[cfg(feature = "stub")]
-pub use stub::StubDataSource;
+#[cfg(feature = "memory")]
+pub mod memory;
+#[cfg(feature = "memory")]
+pub use memory::MemoryDataSource;

@@ -1,6 +1,6 @@
 //! Screener pane — SCREEN verb (bare, optional `criteria`) → SCREEN.RESULT.
 
-use aperture_data::{DataSource, StubDataSource};
+use aperture_data::{DataSource, MemoryDataSource};
 use aperture_swarm::{reply, Agent, Envelope};
 use serde_json::{json, Value};
 
@@ -8,14 +8,14 @@ use crate::agent_runner::verb;
 
 pub struct ScreenPane {
     id: &'static str,
-    source: StubDataSource,
+    source: MemoryDataSource,
 }
 
 impl ScreenPane {
     pub fn new() -> Self {
         Self {
             id: "aperture:pane.screen",
-            source: StubDataSource,
+            source: MemoryDataSource,
         }
     }
 }

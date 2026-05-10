@@ -75,8 +75,7 @@ pub fn envelope_for(
         from: "aperture:cmdbar".into(),
         to,
         payload,
-        // TODO: real ISO-8601 from `js_sys::Date` once a transport ships.
-        timestamp: "1970-01-01T00:00:00.000Z".into(),
+        timestamp: now_iso(),
         priority: Priority::Normal,
         requires_ack: false,
         ttl_ms: 5000,
@@ -385,7 +384,7 @@ pub fn local_render(cmd: &Command) -> Option<Vec<ViewLine>> {
         Verb::Cls => Some(vec![line(Pane::System, "[clear]")]),
         Verb::List => Some(vec![line(
             Pane::Watch,
-            "(watchlist not yet wired — Phase C)",
+            "(use AAPL WATCH GO to add a symbol)",
         )]),
         Verb::Exit => Some(vec![line(Pane::System, "(exit ignored in browser)")]),
         _ => None,
@@ -394,6 +393,23 @@ pub fn local_render(cmd: &Command) -> Option<Vec<ViewLine>> {
 
 fn line(pane: Pane, text: &str) -> ViewLine {
     ViewLine { pane, text: text.into() }
+}
+
+/// Current time as an ISO-8601 string with millisecond precision. On wasm32
+/// this calls `js_sys::Date::new_0().to_iso_string()`; on native we delegate
+/// to `aperture_swarm::now_iso` so the routing tests stay deterministic and
+/// dep-free (no `chrono`/`time`).
+#[cfg(target_arch = "wasm32")]
+fn now_iso() -> String {
+    js_sys::Date::new_0()
+        .to_iso_string()
+        .as_string()
+        .unwrap_or_else(|| "1970-01-01T00:00:00.000Z".to_string())
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn now_iso() -> String {
+    aperture_swarm::now_iso()
 }
 
 fn first_arg(args: &[Arg]) -> Option<String> {

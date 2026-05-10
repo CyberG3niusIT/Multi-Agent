@@ -1,13 +1,13 @@
-//! Tests for the 10 wide market-info methods on `StubDataSource`.
+//! Tests for the 10 wide market-info methods on `MemoryDataSource`.
 //!
 //! Each method has its own test that:
-//!   * Constructs a `StubDataSource`.
+//!   * Constructs a `MemoryDataSource`.
 //!   * Calls the method with deterministic input.
 //!   * Asserts the returned `Payload` (JSON) has the expected shape.
 //!   * Calls the method a second time and asserts the result is bit-equal
-//!     (determinism: stub provider must be reproducible).
+//!     (determinism: in-memory provider must be reproducible).
 //!
-//! Reuses the std-only `block_on` trick from `tests/stub_provider.rs` to
+//! Reuses the std-only `block_on` trick from `tests/memory_provider.rs` to
 //! avoid pulling tokio in as a dev-dep.
 
 use std::future::Future;
@@ -15,10 +15,10 @@ use std::pin::Pin;
 use std::sync::Arc;
 use std::task::{Context, Poll, Wake, Waker};
 
-use aperture_data::{DataSource, Payload, StubDataSource};
+use aperture_data::{DataSource, Payload, MemoryDataSource};
 
 /// Minimal executor: poll the future repeatedly with a no-op waker. Safe
-/// because `StubDataSource`'s methods never `.await` on real I/O.
+/// because `MemoryDataSource`'s methods never `.await` on real I/O.
 fn block_on<F: Future>(mut fut: F) -> F::Output {
     struct NoopWake;
     impl Wake for NoopWake {
@@ -40,7 +40,7 @@ fn block_on<F: Future>(mut fut: F) -> F::Output {
 /// structurally equal. Used to gate determinism: two independent calls
 /// must produce identical JSON.
 fn assert_payload_eq(a: &Payload, b: &Payload, what: &str) {
-    assert_eq!(a, b, "{what}: stub provider must be deterministic");
+    assert_eq!(a, b, "{what}: in-memory provider must be deterministic");
 }
 
 // ---------------------------------------------------------------------------
@@ -49,7 +49,7 @@ fn assert_payload_eq(a: &Payload, b: &Payload, what: &str) {
 
 #[test]
 fn news_global_returns_headlines_and_is_deterministic() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let a = block_on(s.news(None)).expect("news(None) should succeed");
     let b = block_on(s.news(None)).expect("news(None) second call");
     assert_payload_eq(&a, &b, "news(None)");
@@ -62,7 +62,7 @@ fn news_global_returns_headlines_and_is_deterministic() {
 
 #[test]
 fn news_per_symbol_uppercases_scope() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let a = block_on(s.news(Some("aapl"))).expect("news(Some) should succeed");
     let b = block_on(s.news(Some("aapl"))).expect("news(Some) second call");
     assert_payload_eq(&a, &b, "news(Some(\"aapl\"))");
@@ -75,7 +75,7 @@ fn news_per_symbol_uppercases_scope() {
 
 #[test]
 fn macro_indicators_returns_array_with_named_rows() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let a = block_on(s.macro_indicators()).expect("macro_indicators should succeed");
     let b = block_on(s.macro_indicators()).expect("macro_indicators second call");
     assert_payload_eq(&a, &b, "macro_indicators()");
@@ -100,7 +100,7 @@ fn macro_indicators_returns_array_with_named_rows() {
 
 #[test]
 fn yield_curve_returns_tenor_yield_array() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let a = block_on(s.yield_curve()).expect("yield_curve should succeed");
     let b = block_on(s.yield_curve()).expect("yield_curve second call");
     assert_payload_eq(&a, &b, "yield_curve()");
@@ -123,7 +123,7 @@ fn yield_curve_returns_tenor_yield_array() {
 
 #[test]
 fn fx_rates_default_base_is_usd_and_uppercases_input() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let default_a = block_on(s.fx_rates(None)).expect("fx_rates(None) should succeed");
     let default_b = block_on(s.fx_rates(None)).expect("fx_rates(None) second call");
     assert_payload_eq(&default_a, &default_b, "fx_rates(None)");
@@ -146,7 +146,7 @@ fn fx_rates_default_base_is_usd_and_uppercases_input() {
 
 #[test]
 fn options_chain_returns_strikes_and_uppercases_symbol() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let a = block_on(s.options_chain("aapl")).expect("options_chain should succeed");
     let b = block_on(s.options_chain("aapl")).expect("options_chain second call");
     assert_payload_eq(&a, &b, "options_chain(\"aapl\")");
@@ -180,7 +180,7 @@ fn options_chain_returns_strikes_and_uppercases_symbol() {
 
 #[test]
 fn insider_trades_returns_trade_records() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let a = block_on(s.insider_trades("aapl")).expect("insider_trades should succeed");
     let b = block_on(s.insider_trades("aapl")).expect("insider_trades second call");
     assert_payload_eq(&a, &b, "insider_trades(\"aapl\")");
@@ -208,7 +208,7 @@ fn insider_trades_returns_trade_records() {
 
 #[test]
 fn financials_returns_three_statements() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let a = block_on(s.financials("aapl")).expect("financials should succeed");
     let b = block_on(s.financials("aapl")).expect("financials second call");
     assert_payload_eq(&a, &b, "financials(\"aapl\")");
@@ -230,7 +230,7 @@ fn financials_returns_three_statements() {
 
 #[test]
 fn crypto_quote_returns_24h_volume_and_market_cap() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let a = block_on(s.crypto_quote("btc")).expect("crypto_quote should succeed");
     let b = block_on(s.crypto_quote("btc")).expect("crypto_quote second call");
     assert_payload_eq(&a, &b, "crypto_quote(\"btc\")");
@@ -262,7 +262,7 @@ fn crypto_quote_returns_24h_volume_and_market_cap() {
 
 #[test]
 fn risk_metrics_returns_one_row_per_symbol() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let symbols = vec!["AAPL".to_string()];
     let a = block_on(s.risk_metrics(&symbols)).expect("risk_metrics should succeed");
     let b = block_on(s.risk_metrics(&symbols)).expect("risk_metrics second call");
@@ -301,7 +301,7 @@ fn risk_metrics_returns_one_row_per_symbol() {
 
 #[test]
 fn corp_actions_returns_event_array() {
-    let s = StubDataSource;
+    let s = MemoryDataSource;
     let a = block_on(s.corp_actions("aapl")).expect("corp_actions should succeed");
     let b = block_on(s.corp_actions("aapl")).expect("corp_actions second call");
     assert_payload_eq(&a, &b, "corp_actions(\"aapl\")");

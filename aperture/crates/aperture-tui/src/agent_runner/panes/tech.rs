@@ -1,6 +1,6 @@
 //! Technicals pane — TECH verb (symbol-prefixed, indicator arg) → TECH.RESULT.
 
-use aperture_data::{DataSource, StubDataSource};
+use aperture_data::{DataSource, MemoryDataSource};
 use aperture_swarm::{reply, Agent, Envelope};
 use serde_json::{json, Value};
 
@@ -9,7 +9,7 @@ use crate::agent_runner::{symbol_of, verb};
 pub struct TechPane {
     id: &'static str,
     focus: Option<String>,
-    source: StubDataSource,
+    source: MemoryDataSource,
 }
 
 impl TechPane {
@@ -17,7 +17,7 @@ impl TechPane {
         Self {
             id: "aperture:pane.tech",
             focus: None,
-            source: StubDataSource,
+            source: MemoryDataSource,
         }
     }
 }

@@ -3,7 +3,7 @@
 //! Distinct from the equity Quote pane because crypto carries 24h volume,
 //! market cap, and dominance fields that do not apply to equities.
 
-use aperture_data::{DataSource, StubDataSource};
+use aperture_data::{DataSource, MemoryDataSource};
 use aperture_swarm::{reply, Agent, Envelope};
 use serde_json::json;
 
@@ -12,7 +12,7 @@ use crate::agent_runner::{symbol_of, verb};
 pub struct CryptoPane {
     id: &'static str,
     focus: Option<String>,
-    source: StubDataSource,
+    source: MemoryDataSource,
 }
 
 impl CryptoPane {
@@ -20,7 +20,7 @@ impl CryptoPane {
         Self {
             id: "aperture:pane.crypto",
             focus: None,
-            source: StubDataSource,
+            source: MemoryDataSource,
         }
     }
 }

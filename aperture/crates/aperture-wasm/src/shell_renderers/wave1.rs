@@ -133,7 +133,7 @@ pub(super) fn render_options(p: &Value) -> Vec<ViewLine> {
         .unwrap_or_default();
     for r in rows.iter().take(10) {
         let strike = r.get("strike").and_then(Value::as_f64).unwrap_or(0.0);
-        // Stub returns `{call_iv, put_iv, call_oi, put_oi}`; old code read
+        // MemoryDataSource returns `{call_iv, put_iv, call_oi, put_oi}`; old code read
         // `iv`/`oi`/`type` which never matched.
         let call_iv = r.get("call_iv").and_then(Value::as_f64).unwrap_or(0.0);
         let put_iv = r.get("put_iv").and_then(Value::as_f64).unwrap_or(0.0);
@@ -215,7 +215,7 @@ pub(super) fn render_risk(p: &Value) -> Vec<ViewLine> {
     for r in rows.iter().take(20) {
         let sym = r.get("symbol").and_then(Value::as_str).unwrap_or("?");
         let beta = r.get("beta").and_then(Value::as_f64).unwrap_or(0.0);
-        // Stub emits `vol_annualised`; older `volatility` retained as fallback.
+        // MemoryDataSource emits `vol_annualised`; older `volatility` retained as fallback.
         let vol = r
             .get("vol_annualised")
             .or_else(|| r.get("volatility"))
@@ -239,7 +239,7 @@ pub(super) fn render_corpact(p: &Value) -> Vec<ViewLine> {
         .unwrap_or_default();
     for e in events.iter().take(10) {
         let kind = e.get("type").and_then(Value::as_str).unwrap_or("?");
-        // Stub events use `ex_date` (dividend/split) or `date` (earnings).
+        // MemoryDataSource events use `ex_date` (dividend/split) or `date` (earnings).
         let date = e
             .get("ex_date")
             .or_else(|| e.get("date"))

@@ -1,6 +1,6 @@
 //! Index members pane — MEMBERS verb (symbol-prefixed, the index ticker) → MEMBERS.RESULT.
 
-use aperture_data::{DataSource, StubDataSource};
+use aperture_data::{DataSource, MemoryDataSource};
 use aperture_swarm::{reply, Agent, Envelope};
 use serde_json::json;
 
@@ -9,7 +9,7 @@ use crate::agent_runner::{symbol_of, verb};
 pub struct MembersPane {
     id: &'static str,
     focus: Option<String>,
-    source: StubDataSource,
+    source: MemoryDataSource,
 }
 
 impl MembersPane {
@@ -17,7 +17,7 @@ impl MembersPane {
         Self {
             id: "aperture:pane.members",
             focus: None,
-            source: StubDataSource,
+            source: MemoryDataSource,
         }
     }
 }

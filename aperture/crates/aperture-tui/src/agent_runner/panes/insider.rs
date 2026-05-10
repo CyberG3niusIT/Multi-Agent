@@ -1,6 +1,6 @@
 //! Insider pane — INSIDER verb (symbol-prefixed) → INSIDER.RESULT.
 
-use aperture_data::{DataSource, StubDataSource};
+use aperture_data::{DataSource, MemoryDataSource};
 use aperture_swarm::{reply, Agent, Envelope};
 use serde_json::json;
 
@@ -9,7 +9,7 @@ use crate::agent_runner::{symbol_of, verb};
 pub struct InsiderPane {
     id: &'static str,
     focus: Option<String>,
-    source: StubDataSource,
+    source: MemoryDataSource,
 }
 
 impl InsiderPane {
@@ -17,7 +17,7 @@ impl InsiderPane {
         Self {
             id: "aperture:pane.insider",
             focus: None,
-            source: StubDataSource,
+            source: MemoryDataSource,
         }
     }
 }

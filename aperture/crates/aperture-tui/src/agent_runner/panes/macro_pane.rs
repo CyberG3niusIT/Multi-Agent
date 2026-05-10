@@ -3,7 +3,7 @@
 //! Module name is `macro_pane` because `macro` is a Rust keyword; the
 //! pane id remains `aperture:pane.macro` and the verb remains `MACRO`.
 
-use aperture_data::{DataSource, StubDataSource};
+use aperture_data::{DataSource, MemoryDataSource};
 use aperture_swarm::{reply, Agent, Envelope};
 use serde_json::json;
 
@@ -11,14 +11,14 @@ use crate::agent_runner::verb;
 
 pub struct MacroPane {
     id: &'static str,
-    source: StubDataSource,
+    source: MemoryDataSource,
 }
 
 impl MacroPane {
     pub fn new() -> Self {
         Self {
             id: "aperture:pane.macro",
-            source: StubDataSource,
+            source: MemoryDataSource,
         }
     }
 }

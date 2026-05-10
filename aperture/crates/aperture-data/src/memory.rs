@@ -1,15 +1,15 @@
-//! Deterministic in-process provider for tests and offline demos.
+//! Deterministic in-memory provider for tests and offline demos.
 
 use crate::{Candle, DataError, DataSource, Payload, Quote};
 use async_trait::async_trait;
 use serde_json::json;
 
-pub struct StubDataSource;
+pub struct MemoryDataSource;
 
 #[async_trait]
-impl DataSource for StubDataSource {
+impl DataSource for MemoryDataSource {
     fn name(&self) -> &'static str {
-        "stub"
+        "memory"
     }
 
     async fn quote(&self, symbol: &str) -> Result<Quote, DataError> {
@@ -261,7 +261,7 @@ impl DataSource for StubDataSource {
 
     async fn index_members(&self, symbol: &str) -> Result<Payload, DataError> {
         let s = symbol.to_ascii_uppercase();
-        // Tiny stub roster — the real list per index is provider-specific.
+        // Tiny in-memory roster — the real list per index is provider-specific.
         let members = match s.as_str() {
             "DJI" | "DJIA" => vec!["AAPL", "MSFT", "JPM", "GS", "JNJ", "PG", "KO", "BA"],
             "NDX" | "QQQ" => vec!["AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA", "AVGO"],
@@ -310,7 +310,7 @@ impl DataSource for StubDataSource {
                 e
             }
             "RSI" => {
-                // Toy RSI on the deterministic stub: monotonically increasing series → 100.
+                // Toy RSI on the deterministic in-memory series: monotonically increasing → 100.
                 100.0
             }
             "MACD" => {

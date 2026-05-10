@@ -6,11 +6,11 @@ license.workspace = true
 authors.workspace = true
 homepage.workspace = true
 repository.workspace = true
-description = "DataSource and KeyValueStore traits for Aperture; ships a stub provider"
+description = "DataSource and KeyValueStore traits for Aperture; ships an in-memory provider"
 
 [features]
-default = ["stub"]
-stub = []
+default = ["memory"]
+memory = []
 
 [dependencies]
 aperture-core = { path = "../aperture-core" }

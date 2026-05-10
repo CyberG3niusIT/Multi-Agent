@@ -51,7 +51,7 @@ mod legacy {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-mod stub {
+mod native_noop {
     //! Native build of this crate is a no-op so that `cargo check --workspace`
     //! works without the wasm32 target installed. WASM users should build with
     //! `wasm-pack build crates/aperture-wasm`.

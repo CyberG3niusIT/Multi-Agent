@@ -1,6 +1,6 @@
 //! Earnings calendar pane — EARNINGS verb (bare, optional `window_days`) → EARNINGS.RESULT.
 
-use aperture_data::{DataSource, StubDataSource};
+use aperture_data::{DataSource, MemoryDataSource};
 use aperture_swarm::{reply, Agent, Envelope};
 use serde_json::{json, Value};
 
@@ -8,14 +8,14 @@ use crate::agent_runner::verb;
 
 pub struct EarningsPane {
     id: &'static str,
-    source: StubDataSource,
+    source: MemoryDataSource,
 }
 
 impl EarningsPane {
     pub fn new() -> Self {
         Self {
             id: "aperture:pane.earnings",
-            source: StubDataSource,
+            source: MemoryDataSource,
         }
     }
 }

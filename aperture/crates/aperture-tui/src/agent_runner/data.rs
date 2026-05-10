@@ -2,7 +2,7 @@
 //! `QUOTE` / `OHLCV` traffic through this agent rather than calling a
 //! `DataSource` directly so the wire is the single source of truth.
 
-use aperture_data::{DataSource, StubDataSource};
+use aperture_data::{DataSource, MemoryDataSource};
 use aperture_swarm::{reply, Agent, Envelope};
 use serde_json::{json, Value};
 
@@ -10,14 +10,14 @@ use super::{symbol_of, verb};
 
 pub struct DataAgent {
     id: String,
-    source: StubDataSource,
+    source: MemoryDataSource,
 }
 
 impl DataAgent {
     pub fn new() -> Self {
         Self {
             id: "aperture:agent.data".into(),
-            source: StubDataSource,
+            source: MemoryDataSource,
         }
     }
 }

@@ -145,8 +145,9 @@ Example: `{"id":"01HXY...","type":"direct","from":"aperture:cmdbar","to":"apertu
 ## Phase boundaries
 
 - **Phase B (current).** All pane agents back onto
-  `aperture_data::StubDataSource` (deterministic, offline) so the round-trip
+  `aperture_data::MemoryDataSource` (deterministic, offline) so the round-trip
   test in `crates/aperture-tui/tests/roundtrip_stdio.rs` is reproducible.
 - **Phase C.** `pane.oracle` forwards `ASK` to `plugins/ruflo-neural-trader`
-  via the swarm bus; `agent.data` swaps `StubDataSource` for the real
-  provider mux (yahoo / fred / coingecko / sec / alphavantage).
+  via the swarm bus; `agent.data` swaps `MemoryDataSource` for real
+  provider crates implementing `DataSource` (yahoo / fred / coingecko /
+  sec / alphavantage).

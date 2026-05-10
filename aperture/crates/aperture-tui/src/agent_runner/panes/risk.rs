@@ -4,7 +4,7 @@
 //! current watchlist. v0.1: if no symbols are provided we return an empty
 //! result rather than reaching into the watchlist pane out-of-band.
 
-use aperture_data::{DataSource, StubDataSource};
+use aperture_data::{DataSource, MemoryDataSource};
 use aperture_swarm::{reply, Agent, Envelope};
 use serde_json::{json, Value};
 
@@ -12,14 +12,14 @@ use crate::agent_runner::verb;
 
 pub struct RiskPane {
     id: &'static str,
-    source: StubDataSource,
+    source: MemoryDataSource,
 }
 
 impl RiskPane {
     pub fn new() -> Self {
         Self {
             id: "aperture:pane.risk",
-            source: StubDataSource,
+            source: MemoryDataSource,
         }
     }
 }

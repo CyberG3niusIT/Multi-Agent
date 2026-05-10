@@ -24,6 +24,21 @@ if rg -i "$GATE_RE" "$WORKSPACE" "$HERE" \
   exit 1
 fi
 
+echo "[smoke] no-stub-text gate"
+# After the StubDataSource → MemoryDataSource rename and Oracle pane behavioral
+# fix, no source file should ship the literal "(stub)" placeholder text in
+# user-visible strings. The gate itself contains the literal so excludes it.
+STUB_RE='\(stub\)'
+if rg -F "$STUB_RE" "$WORKSPACE" "$HERE" \
+     --glob '!target/**' --glob '!dist/**' --glob '!*.lock' \
+     --glob '!**/smoke.sh' >/dev/null; then
+  echo "no-stub-text gate failed: '(stub)' marker present" >&2
+  rg -F "$STUB_RE" "$WORKSPACE" "$HERE" \
+     --glob '!target/**' --glob '!dist/**' --glob '!*.lock' \
+     --glob '!**/smoke.sh' >&2
+  exit 1
+fi
+
 echo "[smoke] wasm-pack build (optional)"
 if command -v wasm-pack >/dev/null 2>&1; then
   WASM_OUT="/tmp/aperture-wasm-smoke"

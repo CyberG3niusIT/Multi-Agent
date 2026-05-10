@@ -1,6 +1,6 @@
 //! Yields pane — YIELDS verb (bare) → YIELDS.RESULT (treasury yield curve).
 
-use aperture_data::{DataSource, StubDataSource};
+use aperture_data::{DataSource, MemoryDataSource};
 use aperture_swarm::{reply, Agent, Envelope};
 use serde_json::json;
 
@@ -8,14 +8,14 @@ use crate::agent_runner::verb;
 
 pub struct YieldsPane {
     id: &'static str,
-    source: StubDataSource,
+    source: MemoryDataSource,
 }
 
 impl YieldsPane {
     pub fn new() -> Self {
         Self {
             id: "aperture:pane.yields",
-            source: StubDataSource,
+            source: MemoryDataSource,
         }
     }
 }

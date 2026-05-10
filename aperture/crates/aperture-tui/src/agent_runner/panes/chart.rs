@@ -1,6 +1,6 @@
 //! Chart pane — CHART verb → CHART.RESULT (ASCII lines).
 
-use aperture_data::{DataSource, StubDataSource};
+use aperture_data::{DataSource, MemoryDataSource};
 use aperture_swarm::{reply, Agent, Envelope};
 use serde_json::{json, Value};
 
@@ -9,7 +9,7 @@ use crate::agent_runner::{render_ascii_chart, symbol_of, verb};
 pub struct ChartPane {
     id: &'static str,
     focus: Option<String>,
-    source: StubDataSource,
+    source: MemoryDataSource,
 }
 
 impl ChartPane {
@@ -17,7 +17,7 @@ impl ChartPane {
         Self {
             id: "aperture:pane.chart",
             focus: None,
-            source: StubDataSource,
+            source: MemoryDataSource,
         }
     }
 }

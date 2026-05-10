@@ -12,7 +12,7 @@ for the browser.
 | `aperture-core` | Command AST + grammar + state types |
 | `aperture-render` | Backend-agnostic `Pane` + `Widget` traits |
 | `aperture-swarm` | Wire envelope mirroring `v3/@claude-flow/swarm` `Message` |
-| `aperture-data` | `DataSource` + `KeyValueStore` traits + stub provider |
+| `aperture-data` | `DataSource` + `KeyValueStore` traits + in-memory provider |
 | `aperture-tui` | Native binary (ratatui + tokio) |
 | `aperture-wasm` | Browser entry (wasm-bindgen) |
 
@@ -27,5 +27,5 @@ Form: `SYMBOL VERB [ARGS...] GO` — e.g. `AAPL CHART 6M GO`.
 ```
 cargo check --workspace
 cargo test  --workspace
-cargo run -p aperture-tui -- --provider=stub
+cargo run -p aperture-tui -- --provider=memory
 ```

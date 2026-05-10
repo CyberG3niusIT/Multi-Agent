@@ -79,7 +79,7 @@ async fn pane_quote_desc_round_trip() {
     assert_eq!(resp.correlation_id.as_deref(), Some("corr-quote-1"));
     assert_eq!(resp.from, "aperture:pane.quote");
     assert_eq!(resp.to, "aperture:test-harness");
-    // Stub provider always quotes a non-zero last price.
+    // MemoryDataSource always quotes a non-zero last price.
     let last = resp.payload["last"]
         .as_f64()
         .expect("last should be a number");

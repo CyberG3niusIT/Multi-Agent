@@ -7,7 +7,7 @@ use std::time::Duration;
 
 use anyhow::Result;
 use aperture_core::{parse, Verb};
-use aperture_data::{DataSource, StubDataSource};
+use aperture_data::{DataSource, MemoryDataSource};
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use crossterm::execute;
 use crossterm::terminal::{
@@ -24,8 +24,8 @@ use crate::keymap_native::handle_key;
 
 pub async fn run(provider: &str) -> Result<()> {
     let source: Box<dyn DataSource> = match provider {
-        "stub" => Box::new(StubDataSource),
-        other => anyhow::bail!("unknown provider: {other} (only `stub` available in v0.1)"),
+        "memory" => Box::new(MemoryDataSource),
+        other => anyhow::bail!("unknown provider: {other} (only `memory` available in v0.1)"),
     };
 
     enable_raw_mode()?;

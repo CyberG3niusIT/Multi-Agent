@@ -1,6 +1,6 @@
 //! FX pane — FX verb (bare, optional `base`) → FX.RESULT (cross rates).
 
-use aperture_data::{DataSource, StubDataSource};
+use aperture_data::{DataSource, MemoryDataSource};
 use aperture_swarm::{reply, Agent, Envelope};
 use serde_json::{json, Value};
 
@@ -8,14 +8,14 @@ use crate::agent_runner::verb;
 
 pub struct FxPane {
     id: &'static str,
-    source: StubDataSource,
+    source: MemoryDataSource,
 }
 
 impl FxPane {
     pub fn new() -> Self {
         Self {
             id: "aperture:pane.fx",
-            source: StubDataSource,
+            source: MemoryDataSource,
         }
     }
 }

@@ -142,7 +142,7 @@ async fn pane_macro_round_trip() {
         .as_array()
         .expect("rows must be an array");
     assert!(!rows.is_empty(), "expected at least one indicator row");
-    // Each row should have a name + value (sanity check on the stub shape).
+    // Each row should have a name + value (sanity check on the in-memory shape).
     assert!(rows[0].get("name").and_then(Value::as_str).is_some());
     assert!(rows[0].get("value").and_then(Value::as_f64).is_some());
 }

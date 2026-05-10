@@ -1,6 +1,6 @@
 //! SEC filings pane — FILINGS verb (symbol-prefixed) → FILINGS.RESULT.
 
-use aperture_data::{DataSource, StubDataSource};
+use aperture_data::{DataSource, MemoryDataSource};
 use aperture_swarm::{reply, Agent, Envelope};
 use serde_json::json;
 
@@ -9,7 +9,7 @@ use crate::agent_runner::{symbol_of, verb};
 pub struct FilingsPane {
     id: &'static str,
     focus: Option<String>,
-    source: StubDataSource,
+    source: MemoryDataSource,
 }
 
 impl FilingsPane {
@@ -17,7 +17,7 @@ impl FilingsPane {
         Self {
             id: "aperture:pane.filings",
             focus: None,
-            source: StubDataSource,
+            source: MemoryDataSource,
         }
     }
 }

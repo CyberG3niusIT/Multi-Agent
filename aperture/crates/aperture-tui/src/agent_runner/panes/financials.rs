@@ -1,7 +1,7 @@
 //! Financials pane — FINANCIALS verb (symbol-prefixed) → FINANCIALS.RESULT.
 //! Returns income / balance / cashflow snapshots.
 
-use aperture_data::{DataSource, StubDataSource};
+use aperture_data::{DataSource, MemoryDataSource};
 use aperture_swarm::{reply, Agent, Envelope};
 use serde_json::json;
 
@@ -10,7 +10,7 @@ use crate::agent_runner::{symbol_of, verb};
 pub struct FinancialsPane {
     id: &'static str,
     focus: Option<String>,
-    source: StubDataSource,
+    source: MemoryDataSource,
 }
 
 impl FinancialsPane {
@@ -18,7 +18,7 @@ impl FinancialsPane {
         Self {
             id: "aperture:pane.financials",
             focus: None,
-            source: StubDataSource,
+            source: MemoryDataSource,
         }
     }
 }

@@ -1,6 +1,6 @@
 //! Quote pane — DESC verb → QUOTE.RESULT.
 
-use aperture_data::{DataSource, StubDataSource};
+use aperture_data::{DataSource, MemoryDataSource};
 use aperture_swarm::{reply, Agent, Envelope};
 use serde_json::json;
 
@@ -9,7 +9,7 @@ use crate::agent_runner::{symbol_of, verb};
 pub struct QuotePane {
     id: &'static str,
     focus: Option<String>,
-    source: StubDataSource,
+    source: MemoryDataSource,
 }
 
 impl QuotePane {
@@ -17,7 +17,7 @@ impl QuotePane {
         Self {
             id: "aperture:pane.quote",
             focus: None,
-            source: StubDataSource,
+            source: MemoryDataSource,
         }
     }
 }
