@@ -20,6 +20,29 @@ import { GossipConsensus, createGossipConsensus, GossipConfig } from './gossip.j
 export { RaftConsensus, ByzantineConsensus, GossipConsensus };
 export type { RaftConfig, ByzantineConfig, GossipConfig };
 
+// ADR-095 G2 — pluggable consensus transport. Replaces the implicit
+// single-process EventEmitter messaging in the consensus protocols.
+// LocalTransport is the default (matches current behavior); FederationTransport
+// (separate file, ADR-104 wire) is the multi-host one.
+export {
+  LocalTransport,
+  LocalTransportRegistry,
+  defaultLocalRegistry,
+  generateNodeKeyPair,
+  signMessage,
+  verifyMessage,
+  canonicalizeForSigning,
+  messageDigest,
+} from './transport.js';
+export type {
+  ConsensusTransport,
+  ConsensusMessage,
+  ConsensusReply,
+  ConsensusMessageHandler,
+  NodeKeyPair,
+  LocalTransportOptions,
+} from './transport.js';
+
 type ConsensusImplementation = RaftConsensus | ByzantineConsensus | GossipConsensus;
 
 export class ConsensusEngine extends EventEmitter implements IConsensusEngine {

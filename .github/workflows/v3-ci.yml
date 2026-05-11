@@ -431,6 +431,14 @@ jobs:
         # non-optional but the server omits it → `.join()` on undefined.
         run: node plugins/ruflo-core/scripts/test-cli-no-crash.mjs
 
+      - name: Run ADR-095 G2 consensus-transport guard
+        shell: bash
+        # Asserts @claude-flow/swarm ships a real pluggable ConsensusTransport
+        # (not the implicit single-process EventEmitter): required exports
+        # present, LocalTransport round-trip works, Ed25519 sign/verify is
+        # real (no `return true` stub regression). ADR-095 G2.
+        run: node plugins/ruflo-core/scripts/test-consensus-transport.mjs
+
   tool-descriptions-audit:
     # ADR-112 — gate: every MCP tool description must include "Use when …"
     # guidance so Claude knows when to pick Ruflo's tool over native
