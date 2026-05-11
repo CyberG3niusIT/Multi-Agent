@@ -150,6 +150,12 @@
       "desc": "agentdb_pattern-search now has a symmetric memory-store-fallback path (tiered: semantic \u2192 substring). Previously pattern-store wrote to memory-store-fallback while pattern-search only queried ReasoningBank (always empty), so writes were silently lost. New CI smoke at plugins/ruflo-core/scripts/test-mcp-roundtrips.mjs catches the paired-tool-round-trip regression class.",
       "file": "v3/@claude-flow/cli/dist/src/mcp-tools/agentdb-tools.js",
       "marker": "controller: 'memory-store-fallback'"
+    },
+    {
+      "id": "#1906",
+      "desc": "agent_execute model aliases (haiku/sonnet/opus/inherit) map to current Claude 4.x ids (claude-haiku-4-5-20251001 / claude-sonnet-4-6 / claude-opus-4-7) \u2014 previously stuck on claude-3-*-latest which the Anthropic API 404s. DEFAULT_ANTHROPIC_MODEL = claude-sonnet-4-6. Unit test __tests__/agent-execute-models.test.ts asserts no alias resolves to a claude-3.x id.",
+      "file": "v3/@claude-flow/cli/dist/src/mcp-tools/agent-execute-core.js",
+      "marker": "claude-sonnet-4-6"
     }
   ]
 }

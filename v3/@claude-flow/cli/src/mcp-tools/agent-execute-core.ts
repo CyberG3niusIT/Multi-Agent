@@ -54,17 +54,24 @@ function saveAgentStore(store: AgentStore): void {
   writeFileSync(getAgentPath(), JSON.stringify(store, null, 2), 'utf-8');
 }
 
+// #1906 — these were stuck on Claude-3.x ids that the Anthropic API now
+// 404s. Current model ids (Claude 4.x family):
+//   Opus 4.7    → claude-opus-4-7
+//   Sonnet 4.6  → claude-sonnet-4-6
+//   Haiku 4.5   → claude-haiku-4-5-20251001
+// `inherit` and the various defaults below all map to Sonnet 4.6.
+export const DEFAULT_ANTHROPIC_MODEL = 'claude-sonnet-4-6';
 const MODEL_MAP: Record<string, string> = {
-  haiku: 'claude-3-5-haiku-latest',
-  sonnet: 'claude-3-5-sonnet-latest',
-  opus: 'claude-3-opus-latest',
-  inherit: 'claude-3-5-sonnet-latest',
+  haiku: 'claude-haiku-4-5-20251001',
+  sonnet: 'claude-sonnet-4-6',
+  opus: 'claude-opus-4-7',
+  inherit: DEFAULT_ANTHROPIC_MODEL,
 };
 
 export interface AnthropicCallInput {
   prompt: string;
   systemPrompt?: string;
-  model?: string;          // already-resolved Anthropic model id (e.g. 'claude-3-5-sonnet-latest')
+  model?: string;          // already-resolved Anthropic model id (e.g. 'claude-sonnet-4-6')
   maxTokens?: number;
   temperature?: number;
   timeoutMs?: number;
@@ -109,7 +116,7 @@ export async function callAnthropicMessages(input: AnthropicCallInput): Promise<
         'No LLM provider configured. Set ANTHROPIC_API_KEY (Tier-3) or OLLAMA_API_KEY (Tier-2 Ollama Cloud — see issue #1725).',
     };
   }
-  const model = input.model || 'claude-3-5-sonnet-latest';
+  const model = input.model || DEFAULT_ANTHROPIC_MODEL;
   const startedAt = Date.now();
   try {
     const controller = new AbortController();
@@ -277,11 +284,11 @@ function resolveOllamaModel(input: string | undefined): string {
 /**
  * Resolve a model identifier to an Anthropic model ID. Accepts:
  * - logical names: 'haiku', 'sonnet', 'opus', 'inherit'
- * - prefixed: 'anthropic:claude-3-5-sonnet-latest'
- * - direct: 'claude-3-5-sonnet-latest'
+ * - prefixed: 'anthropic:claude-sonnet-4-6'
+ * - direct: 'claude-sonnet-4-6'
  */
 export function resolveAnthropicModel(input: string | undefined): string {
-  if (!input) return 'claude-3-5-sonnet-latest';
+  if (!input) return DEFAULT_ANTHROPIC_MODEL;
   if (input in MODEL_MAP) return MODEL_MAP[input];
   if (input.startsWith('anthropic:')) return input.slice('anthropic:'.length);
   return input;
@@ -325,7 +332,7 @@ export async function executeAgentTask(input: AgentExecuteInput): Promise<AgentE
   if (!agent) return { success: false, agentId: input.agentId, error: 'Agent not found' };
   if (agent.status === 'terminated') return { success: false, agentId: input.agentId, error: 'Agent has been terminated' };
 
-  const anthropicModel = MODEL_MAP[agent.model || 'sonnet'] || 'claude-3-5-sonnet-latest';
+  const anthropicModel = MODEL_MAP[agent.model || 'sonnet'] || DEFAULT_ANTHROPIC_MODEL;
   const systemPrompt = input.systemPrompt ||
     `You are a ${agent.agentType} agent operating as part of a Ruflo swarm. ` +
     `Agent ID: ${input.agentId}. Domain: ${agent.domain ?? 'general'}. ` +

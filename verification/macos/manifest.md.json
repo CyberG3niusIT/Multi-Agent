@@ -1,19 +1,19 @@
 {
   "manifest": {
     "schema": "ruflo-witness/v1",
-    "issuedAt": "2026-05-11T04:06:43.232Z",
-    "gitCommit": "e76ddd215c3c2b514613376f494c75605c3d7787",
-    "branch": "fix/1896-audit-gaps",
+    "issuedAt": "2026-05-11T14:55:59.302Z",
+    "gitCommit": "a03f6f6ed939659784dc1f35916351f06b74aa92",
+    "branch": "fix/1906-model-aliases",
     "os": "macos",
     "releases": {
-      "ruflo": "3.7.0-alpha.21",
-      "claude-flow": "3.7.0-alpha.21",
-      "@claude-flow/cli": "3.7.0-alpha.21",
+      "ruflo": "3.7.0-alpha.23",
+      "claude-flow": "3.7.0-alpha.23",
+      "@claude-flow/cli": "3.7.0-alpha.23",
       "@claude-flow/memory": "3.0.0-alpha.15"
     },
     "summary": {
-      "totalFixes": 103,
-      "verified": 103,
+      "totalFixes": 104,
+      "verified": 104,
       "missing": 0
     },
     "fixes": [
@@ -117,7 +117,7 @@
         "id": "#1697",
         "desc": "rvf-wasm overrides",
         "file": "package.json",
-        "sha256": "475b86e02fc5b1bfbaf644c5c75167fc4c2d541132961606013064db292073fa",
+        "sha256": "20718f418eaba94d70e2281f30c45a61bf8f687100ee89df847c8a145ed46b82",
         "marker": "@ruvector/rvf-wasm",
         "markerVerified": true
       },
@@ -141,7 +141,7 @@
         "id": "#1721",
         "desc": "postinstall copies all dist/src/* siblings",
         "file": "v3/@claude-flow/cli/package.json",
-        "sha256": "d39aba26ecfd947ee0e06b3dcaa74b4bd810c9014e08e4420023ef4b6899abbd",
+        "sha256": "a3034ee03daf8f563b417f166a7d151879b83b8d6a7bb7d5ae837c82d61a1d5f",
         "marker": "postinstall.cjs",
         "markerVerified": true
       },
@@ -157,7 +157,7 @@
         "id": "G1",
         "desc": "agent_execute wires Anthropic Messages API",
         "file": "v3/@claude-flow/cli/dist/src/mcp-tools/agent-execute-core.js",
-        "sha256": "3070ca38954ad68385faf54d4111e7395cf0667a3f4db6607fe1b9b3d84915fa",
+        "sha256": "2bc49c38b14d43a0329bf5d84913528851ef1c48ab32b8c8c1c40f83c062fc7f",
         "marker": "callAnthropicMessages",
         "markerVerified": true
       },
@@ -461,7 +461,7 @@
         "id": "#1795",
         "desc": "umbrella package missing cli-core dep (ERR_MODULE_NOT_FOUND)",
         "file": "package.json",
-        "sha256": "475b86e02fc5b1bfbaf644c5c75167fc4c2d541132961606013064db292073fa",
+        "sha256": "20718f418eaba94d70e2281f30c45a61bf8f687100ee89df847c8a145ed46b82",
         "marker": "@claude-flow/cli-core",
         "markerVerified": true
       },
@@ -629,7 +629,7 @@
         "id": "#1825",
         "desc": "hotfix: workspace: protocol leak in cli optionalDependencies",
         "file": "v3/@claude-flow/cli/package.json",
-        "sha256": "d39aba26ecfd947ee0e06b3dcaa74b4bd810c9014e08e4420023ef4b6899abbd",
+        "sha256": "a3034ee03daf8f563b417f166a7d151879b83b8d6a7bb7d5ae837c82d61a1d5f",
         "marker": "\"@claude-flow/memory\": \"^3.0.0-alpha.14\"",
         "markerVerified": true
       },
@@ -661,7 +661,7 @@
         "id": "#1862",
         "desc": "ruflo-core PostToolUse hooks call documented CLI flags (-c/-s/-e, -f/-s) instead of bogus --format true",
         "file": "plugins/ruflo-core/hooks/hooks.json",
-        "sha256": "09c10c262c0bb36301e713e8173090adcdfe345443bff9c4c4aa17fb1e900033",
+        "sha256": "c74a26044c1d283589696590f652ef21f4c65613f9ff5eb015127b1819d37fe7",
         "marker": "hooks post-edit -f \\\"$FILE\\\" -s true",
         "markerVerified": true
       },
@@ -840,15 +840,23 @@
         "sha256": "666141cf59c2e75c9f65fe50eff85076a96d820bddceaba79c0b67a4469b3bb5",
         "marker": "controller: 'memory-store-fallback'",
         "markerVerified": true
+      },
+      {
+        "id": "#1906",
+        "desc": "agent_execute model aliases (haiku/sonnet/opus/inherit) map to current Claude 4.x ids (claude-haiku-4-5-20251001 / claude-sonnet-4-6 / claude-opus-4-7) — previously stuck on claude-3-*-latest which the Anthropic API 404s. DEFAULT_ANTHROPIC_MODEL = claude-sonnet-4-6. Unit test __tests__/agent-execute-models.test.ts asserts no alias resolves to a claude-3.x id.",
+        "file": "v3/@claude-flow/cli/dist/src/mcp-tools/agent-execute-core.js",
+        "sha256": "2bc49c38b14d43a0329bf5d84913528851ef1c48ab32b8c8c1c40f83c062fc7f",
+        "marker": "claude-sonnet-4-6",
+        "markerVerified": true
       }
     ]
   },
   "integrity": {
     "manifestHashAlgo": "sha256",
-    "manifestHash": "28866fdf3dfa2015ea16cd0ce7b7c104ec4f58a568ebe64487ce7b427f7bab3a",
+    "manifestHash": "94245095c0e9d6f1af63cb9dc4e6e5e323c1a80587e39ca7a25c9485a66d36e9",
     "signatureAlgo": "ed25519",
-    "publicKey": "a48627587e54588d914fdd1e1413024ce7006c4a21c5e853f0ce74a40e6e7fca",
-    "signature": "749d209160747aad11ff46b2663cceee305f03cfaf31b7aa9ddd532a4e1ceca3f7f82d43466aa948cf85e5419fecdec806e8f87f4284ef31df5449f5ed6a9601",
+    "publicKey": "a8ffd8705900919cebae426f9b297a9d124cc29b2178cb6e34a5e6f2366b9a84",
+    "signature": "2422c16436e6e3a9f71ce7ce1ac697fca1e8ebd7396dd3ad278526dc4d732d67fd11d26b4561c52eff5eec61aef03f926f47fea6dfe808ef41cdf93ecab8e503",
     "seedDerivation": "sha256(gitCommit + ':ruflo-witness/v1')"
   }
 }
