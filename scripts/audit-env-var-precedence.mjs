@@ -61,6 +61,7 @@ const KNOWN_ESCAPE_HATCHES = new Set([
   'RUFLO_HOOK_SKIP_NPX',          // CI: suppress cold-install latency in smoke tests
   'RUFLO_HOOK_CLI_OVERRIDE',      // #2721 test-only: point plugins/ruflo-core/scripts/ruflo-hook.cjs at a local CLI build instead of the ruflo/claude-flow/npx PATH probe. Hook scripts have no CLI-flag surface (invoked by hooks.json, never a user-typed command)
   'RUFLO_HOOK_DEBUG_STDOUT',      // #2721 test-only: surface the invoked CLI's stdout/stderr from ruflo-hook.cjs instead of swallowing it, so test-hooks.mjs can assert on recorded values. Same no-CLI-surface reasoning as RUFLO_HOOK_CLI_OVERRIDE above — production never sets this
+  'RUFLO_HOOK_UNIT_TEST',         // test-only: skip main() when ruflo-hook.cjs is require()'d by escape-cmd-arg.test.cjs, so the unit test can reach escapeCmdArg() without triggering the real hook flow / process.exit(0). Same no-CLI-surface reasoning — hooks.json always require()s this file directly, there is no invocation to attach a flag to
   'RUFLO_SUBLINEAR_NATIVE',       // Manual override for native vs WASM sublinear — CI/perf knob
   'RUFLO_METAHARNESS_CACHE_BASE', // CI/test seam: relocates the ~/.ruflo pinned-cache root in metaharness smoke tests — intentionally env-only, plugin scripts have no CLI-flag surface
   'RUFLO_FUNNEL',                 // Read inside the generated hook-handler.cjs (ADR-312/313 rate-limit nudge), not a typed CLI invocation — no command surface to attach a flag to
@@ -97,6 +98,13 @@ const KNOWN_ESCAPE_HATCHES = new Set([
   // see CLAUDE_FLOW_STRICT_PUBLISH below for the precedent).
   'CLAUDE_FLOW_MCP_COMPOSITION_BLOCK', // Opt-in strict mode for the Composition Inspector (evaluateToolComposition) — default warn+log, '1'/'true' switches a flagged tool chain to blocked. Deploy/CI ops posture toggle read fresh per scan, not a per-invocation CLI flag; no interactive CLI command owns a single MCP tool-composition scan's lifetime.
   'CLAUDE_FLOW_SECURITY_CHANNEL_GATE', // Kill switch for the ChannelGuard inter-agent message sanitization gate (guardChannelMessage, wired into SwarmCommunication.sendMessage) — default enabled, '0' disables for trusted internal environments. Same escape-hatch shape as CLAUDE_FLOW_DISABLE_BRIDGE above; the gate runs inside the swarm-communication hot path, not behind a user-typed command.
+
+  // ── SONA fleet-wide learning-mode default (feat/sona-mode-from-env) ─────────
+  // Read inside @claude-flow/integration/src/sona-adapter.ts (sonaModeFromEnv,
+  // exported) and @claude-flow/memory/src/learning-bridge.ts (sonaModeFromEnv,
+  // module-private) — both outside this audit's SCAN_ROOTS today, registered
+  // anyway per the same requirement as CLAUDE_FLOW_MCP_COMPOSITION_BLOCK above.
+  'RUFLO_INTELLIGENCE_MODE', // Fleet-wide default SONA learning mode ('real-time'|'balanced'|'research'|'edge'|'batch') for a managed deployment that wants every session to learn in a given profile without threading `mode`/`sonaMode` through every call site. Read fresh per SONAAdapter construction / mergeConfig() call and per LearningBridge construction — never cached at module load. An explicit per-call mode/sonaMode always wins; an unset or unrecognised value falls through to the caller's own default ('balanced'), never silently selecting a profile. Deploy/ops config, not a per-invocation CLI flag.
 
   // ── Feature flags (set by init into settings.json, not user-typed CLI) ──────
   'CLAUDE_FLOW_V3_ENABLED',
@@ -170,6 +178,16 @@ const KNOWN_ESCAPE_HATCHES = new Set([
   // issuance still requires an authenticated identity adapter and never trusts
   // this label as issuer proof.
   'CLAUDE_FLOW_PRINCIPAL_ID',
+
+  // ── ADR-377 Phase 3: per-worker Ed25519 caller-identity credential ─────────
+  // DualModeOrchestrator mints these into a spawned worker's OWN environment
+  // (workerEnvironment()) — a credential pair for authorizeMcpTool's
+  // resolveMcpCallerIdentity() to verify, not a value any caller should be
+  // able to select via a CLI flag (that would let a process simply assert a
+  // signature instead of proving one). Same no-CLI-surface reasoning as
+  // CLAUDE_FLOW_PRINCIPAL_ID above.
+  'CLAUDE_FLOW_MCP_CALLER_PUBKEY',
+  'CLAUDE_FLOW_MCP_INVOCATION_TOKEN',
 
   // ── OS / runtime standard env ────────────────────────────────────────────────
   'HOME',
